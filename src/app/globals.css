@@ -1,0 +1,111 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Epilogue:wght@400;500;600;700;800&family=Manrope:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&family=Lora:ital,wght@0,400;0,600;1,400&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+
+body {
+  font-family: 'Inter', sans-serif;
+}
+
+@layer base {
+  :root {
+    --background: 210 20% 98%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 192 79% 30%;
+    /* Dawami Teal #107189 */
+    --primary-foreground: 0 0% 98%;
+    --secondary: 212 45% 19%;
+    /* Dawami Navy #1A2E44 */
+    --secondary-foreground: 0 0% 98%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 142 84% 65%;
+    /* Dawami Lime #6AFF4A */
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 192 79% 30%;
+    --radius: 1rem;
+  }
+
+  .dark {
+    --background: 222 47% 6%;
+    --foreground: 210 40% 98%;
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 47% 6%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 192 79% 45%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 212 45% 25%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 142 84% 65%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 192 79% 45%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 40;
+}
+
+.nav-curve {
+  background: var(--nav-bg, #1A2E44);
+  mask: url("data:image/svg+xml,%3Csvg width='400' height='100' viewBox='0 0 400 100' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 30C0 13.4315 13.4315 0 30 0H145.42C157.07 0 166.45 10.32 173.2 21.3C184.22 39.2 215.78 39.2 226.8 21.3C233.55 10.32 242.93 0 254.58 0H370C386.569 0 400 13.4315 400 30V100H0V30Z' fill='black'/%3E%3C/svg%3E");
+  -webkit-mask: url("data:image/svg+xml,%3Csvg width='400' height='100' viewBox='0 0 400 100' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 30C0 13.4315 13.4315 0 30 0H145.42C157.07 0 166.45 10.32 173.2 21.3C184.22 39.2 215.78 39.2 226.8 21.3C233.55 10.32 242.93 0 254.58 0H370C386.569 0 400 13.4315 400 30V100H0V30Z' fill='black'/%3E%3C/svg%3E");
+  mask-size: 100% 100%;
+  -webkit-mask-size: 100% 100%;
+}
+
+.pulse-teal {
+  box-shadow: 0 0 0 0 rgba(16, 113, 137, 0.4);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 113, 137, 0.7);
+  }
+
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 10px rgba(16, 113, 137, 0);
+  }
+
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 113, 137, 0);
+  }
+}
+
+.curved-nav {
+  border-radius: 2rem 2rem 0 0;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+}

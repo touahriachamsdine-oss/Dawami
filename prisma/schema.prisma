@@ -1,0 +1,96 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider      = "prisma-client-js"
+  engineType    = "library"
+  binaryTargets = ["native"]
+}
+
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String          @id @default(cuid())
+  uid             String          @unique
+  name            String
+  email           String?         @unique
+  avatarUrl       String?
+  role            String          @default("Employee")
+  rank            String?
+  baseSalary      Float           @default(0)
+  totalSalary     Float           @default(0)
+  attendanceRate  Float           @default(0)
+  daysAbsent      Int             @default(0)
+  workDays        String          @default("")
+  accountStatus   String          @default("Pending")
+  startDate       DateTime?
+  jobDescription  String?
+  fingerprintId   Int?
+  attendances     Attendance[]
+  payrollRecords  PayrollRecord[]
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
+
+model Attendance {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  date          String   
+  checkInTime   DateTime?
+  checkOutTime  DateTime?
+  status        String   
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model PayrollRecord {
+  id                 String   @id @default(cuid())
+  userId             String
+  user               User     @relation(fields: [userId], references: [id])
+  month              String   // e.g. "2024-01"
+  
+  jobTitle           String?
+  hourlyRate         Float    @default(0)
+  hoursWorked        Float    @default(0)
+  daysWorked         Float    @default(0)
+  isHourBased        Boolean  @default(true)
+  
+  baseSalary         Float    @default(0)
+  
+  transportAllowance Float    @default(0)
+  zoneAllowance      Float    @default(0)
+  seniorityAllowance Float    @default(0)
+  familyAllowance    Float    @default(0)
+  otherAllowance     Float    @default(0)
+  otherAllowanceName String?
+  
+  grossSalary        Float    @default(0)
+  cnas               Float    @default(0)
+  irg                Float    @default(0)
+  netSalary          Float    @default(0)
+  
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@unique([userId, month])
+}
+
+model SystemSetting {
+  id             String @id @default("default")
+  payCutRate     Float  @default(0)
+  companyName    String @default("Solminder Inc.")
+  companyAddress String @default("")
+}
+
+model SensorStatus {
+  id        String   @id @default("default")
+  status    String   @default("Offline")
+  lastSeen  DateTime @default(now())
+  message   String?
+  updatedAt DateTime @updatedAt
+}

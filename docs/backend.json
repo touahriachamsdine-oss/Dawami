@@ -1,0 +1,199 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user account in the system, including both admins and employees.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The user's full name."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address.",
+          "format": "email"
+        },
+        "role": {
+          "type": "string",
+          "description": "The user's role in the system (Admin or Employee)."
+        },
+        "rank": {
+          "type": "string",
+          "description": "The user's job rank or level."
+        },
+        "baseSalary": {
+          "type": "number",
+          "description": "The user's base salary."
+        },
+        "totalSalary": {
+          "type": "number",
+          "description": "The user's total salary after deductions."
+        },
+        "attendanceRate": {
+          "type": "number",
+          "description": "The user's attendance rate."
+        },
+        "daysAbsent": {
+          "type": "number",
+          "description": "The number of days the user has been absent."
+        },
+        "uid": {
+          "type": "string",
+          "description": "The user's unique ID from Firebase Authentication."
+        },
+        "accountStatus": {
+          "type": "string",
+          "description": "The status of the user account (e.g., 'Pending', 'Approved', 'Rejected')."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "email",
+        "role",
+        "rank",
+        "baseSalary",
+        "totalSalary",
+        "attendanceRate",
+        "daysAbsent",
+        "uid",
+        "accountStatus"
+      ]
+    },
+    "Attendance": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Attendance",
+      "type": "object",
+      "description": "Represents an attendance record for a user on a specific date.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the attendance record."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N Attendance)"
+        },
+        "date": {
+          "type": "string",
+          "description": "The date of the attendance record.",
+          "format": "date-time"
+        },
+        "checkInTime": {
+          "type": "string",
+          "description": "The time the user checked in.",
+          "format": "date-time"
+        },
+        "checkOutTime": {
+          "type": "string",
+          "description": "The time the user checked out.",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "The attendance status (Present, Absent, Late)."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "date",
+        "checkInTime",
+        "checkOutTime",
+        "status"
+      ]
+    },
+    "Setting": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Setting",
+      "type": "object",
+      "description": "Represents global settings for the application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the setting record."
+        },
+        "payCutRate": {
+          "type": "number",
+          "description": "The percentage per missed day for salary deduction."
+        }
+      },
+      "required": [
+        "id",
+        "payCutRate"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user account information, including roles, ranks, salary, and account status. The 'uid' field is used to link Firebase Authentication with Firestore data. Includes denormalized 'role', 'accountStatus', 'rank', 'baseSalary', 'totalSalary', 'attendanceRate', 'daysAbsent' for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/attendance/{attendanceId}",
+        "definition": {
+          "entityName": "Attendance",
+          "schema": {
+            "$ref": "#/backend/entities/Attendance"
+          },
+          "description": "Stores attendance records for each user. Accessible only to the user and admins. Uses path-based ownership.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "attendanceId",
+              "description": "The unique identifier for the attendance record."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/settings/{settingId}",
+        "definition": {
+          "entityName": "Setting",
+          "schema": {
+            "$ref": "#/backend/entities/Setting"
+          },
+          "description": "Stores global application settings, such as the payCutRate. Accessible to admins.",
+          "params": [
+            {
+              "name": "settingId",
+              "description": "The unique identifier for the setting record."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to support a HR management website with admin and employee roles, attendance tracking, and automated salary calculations. The design prioritizes authorization independence and simplifies security rules. User data is stored in the `/users` collection, accessible only to admins and the user themselves. Attendance records are stored under each user's document in the `/users/{userId}/attendance` subcollection, ensuring that only the user and admins can access attendance records for a specific user. Settings are stored in a global `/settings` collection, accessible to admins. Account approval and role management are handled via the `accountStatus` and `role` fields in the `users` collection. The `uid` field in each user document is essential for linking Firebase Authentication with Firestore data. Salary information is stored directly in the user document to facilitate easy access and modification by authorized roles. Admins create new accounts, which are set as `accountStatus: Pending` in the `users` collection, and set the user's `role`. Upon approval, admins will update the user's `accountStatus` to 'Approved'.\n\nAuthorization Independence (CRITICAL): The structure avoids hierarchical authorization dependencies by storing all necessary user attributes (role, accountStatus, etc.) directly within the user document. This eliminates the need for `get()` calls in security rules, enabling atomic operations and simplifying debugging.\n\nStructural Segregation (Homogeneous Security Posture):  The structure segregates user data and attendance records into separate collections and subcollections, ensuring that each collection has a clear and consistent security posture.\n\nAccess Modeling (Standardization and Consistency):  The structure uses path-based ownership for attendance records (`/users/{userId}/attendance/{attendanceId}`), ensuring that only the user and admins can access attendance data.  The settings document is globally accessible to admins.\n\nQAPs (Rules are not Filters): The structure supports secure `list` operations by leveraging path-based ownership and role-based access control. For example, listing attendance records is restricted to the user and admins, and listing users is restricted to admins based on the user's `role` in the `users` collection."
+  },
+  "database": {
+    "rules": "database.rules.json"
+  }
+}
