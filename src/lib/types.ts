@@ -21,6 +21,7 @@ export type User = {
   maritalStatus?: string;
   childrenCount?: number;
   phoneNumber?: string;
+  cnasNumber?: string;
 };
 
 export type Attendance = {

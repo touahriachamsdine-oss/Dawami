@@ -214,69 +214,10 @@ export default function Dashboard() {
             </Link>
           </div>
 
-          <div className="mt-20 mb-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="p-6 bg-slate-50 dark:bg-slate-900/50 rounded-[32px] border border-slate-100 dark:border-slate-800">
-              <div className="flex justify-between items-center mb-5">
-                <h3 className="font-bold text-slate-800 dark:text-white">Operational Pulse</h3>
-                <span className="text-[10px] bg-emerald-500 text-white px-3 py-1 rounded-full font-bold uppercase tracking-wider animate-pulse">Live</span>
-              </div>
-              <div className="space-y-4">
-                {liveFeed.length > 0 ? (
-                  liveFeed.map((item, idx) => (
-                    <div key={item.id} className="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm flex items-center gap-4 hover:translate-x-1 transition-transform cursor-pointer">
-                      <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
-                        <Avatar className="h-full w-full">
-                          <AvatarImage src={item.userAvatarUrl} alt="Avatar" />
-                          <AvatarFallback>{item.userName.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-semibold text-slate-800 dark:text-white">{item.userName}</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                          <span className="inline-block w-2 h-2 rounded-full bg-slate-400 mr-2"></span>
-                          {item.status}
-                        </p>
-                      </div>
-                      <ArrowUpRight className="w-4 h-4 text-slate-300" />
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center py-10 text-slate-500">No employees found.</div>
-                )}
-              </div>
-            </div>
-
-            <div className="p-6 bg-slate-50 dark:bg-slate-900/50 rounded-[32px] border border-slate-100 dark:border-slate-800 flex flex-col justify-center items-center text-center">
-              <h3 className="font-bold text-slate-800 dark:text-white mb-2">{t('dashboard.attendanceRate')}</h3>
-              <div className="relative size-32 flex items-center justify-center">
-                <svg className="size-full" viewBox="0 0 36 36">
-                  <path
-                    className="text-slate-200 dark:text-slate-800 stroke-current"
-                    strokeWidth="3"
-                    fill="none"
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  />
-                  <path
-                    className="text-primary stroke-current"
-                    strokeWidth="3"
-                    strokeDasharray={`${averageAttendance}, 100`}
-                    strokeLinecap="round"
-                    fill="none"
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  />
-                </svg>
-                <div className="absolute">
-                  <span className="text-2xl font-black text-slate-800 dark:text-white">{averageAttendance.toFixed(0)}%</span>
-                </div>
-              </div>
-              <p className="mt-4 text-xs text-slate-500 dark:text-slate-400 max-w-[200px]">
-                {t('dashboard.companyWideAverage')}
-              </p>
-            </div>
-          </div>
+          {/* Secondary content removed as requested */}
         </main>
         <BottomNavBar userRole={currentUser.role} />
-      </div>
-    </div>
+      </div >
+    </div >
   );
 }

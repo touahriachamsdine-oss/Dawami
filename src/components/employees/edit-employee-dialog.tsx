@@ -24,6 +24,7 @@ const formSchema = z.object({
   email: z.string().email('Invalid email address.'),
   rank: z.string().min(2, 'Rank is required.'),
   nationalId: z.string().optional(),
+  cnasNumber: z.string().optional(),
   birthDate: z.date().optional(),
   maritalStatus: z.string().optional(),
   childrenCount: z.coerce.number().min(0).optional(),
@@ -61,11 +62,13 @@ export function EditEmployeeDialog({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: z.string().email('Invalid email address.'),
-      rank: z.string().min(2, 'Rank is required.'),
-      fingerprintId: z.coerce.number().min(1).optional(),
-      nationalId: z.string().optional(),
-      // birthDate: user.birthDate ? new Date(user.birthDate) : undefined, // Handled in render maybe
+      name: user.name,
+      email: user.email,
+      rank: user.rank,
+      fingerprintId: user.fingerprintId,
+      nationalId: user.nationalId,
+      cnasNumber: user.cnasNumber,
+      // birthDate: user.birthDate ? new Date(user.birthDate) : undefined,
       maritalStatus: user.maritalStatus,
       childrenCount: user.childrenCount,
       phoneNumber: user.phoneNumber,
@@ -170,6 +173,19 @@ export function EditEmployeeDialog({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>National ID</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="cnasNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>CNAS Number</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>

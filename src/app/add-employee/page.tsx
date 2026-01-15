@@ -55,6 +55,8 @@ const formSchema = z.object({
   rank: z.string().min(2, 'Rank is required.'),
   jobDescription: z.string().optional(),
   baseSalary: z.coerce.number().min(0, 'Salary must be a positive number.'),
+  fingerprintId: z.coerce.number().optional(),
+  cnasNumber: z.string().optional(),
   role: z.enum(['Admin', 'Employee']),
   workDays: z.array(z.number()).min(1, "Employee must work at least one day"),
   startDate: z.date({
@@ -128,7 +130,8 @@ export default function AddEmployeePage() {
         workDays: values.workDays,
         startDate: values.startDate.toISOString(),
         jobDescription: values.jobDescription,
-        fingerprintId: Math.floor(Math.random() * 1000),
+        fingerprintId: values.fingerprintId || Math.floor(Math.random() * 1000), // Use provided ID or random default
+        cnasNumber: values.cnasNumber,
       };
 
       await addDoc(collection(firestore, 'users'), userDoc);
@@ -252,6 +255,20 @@ export default function AddEmployeePage() {
                       <FormItem>
                         <FormLabel>{t('addEmployee.baseSalary')}</FormLabel>
                         <FormControl><Input type="number" {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="fingerprintId" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Fingerprint ID</FormLabel>
+                        <FormControl><Input type="number" placeholder="Enter ID from Sensor" {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="cnasNumber" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>CNAS Number</FormLabel>
+                        <FormControl><Input placeholder="XXXXXXXX" {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />

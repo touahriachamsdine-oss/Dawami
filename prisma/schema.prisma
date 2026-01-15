@@ -35,6 +35,7 @@ model User {
   maritalStatus   String?         @default("Single") // Single, Married, Divorced, etc.
   childrenCount   Int             @default(0)
   phoneNumber     String?
+  cnasNumber      String?
   attendances     Attendance[]
   payrollRecords  PayrollRecord[]
   createdAt       DateTime        @default(now())
