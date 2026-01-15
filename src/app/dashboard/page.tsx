@@ -99,6 +99,18 @@ export default function Dashboard() {
     { id: 'att4', userId: 'emp003', userName: 'Sophia Williams', userAvatarUrl: 'https://picsum.photos/seed/4/100/100', date: '2024-07-28', status: 'On Leave' },
   ];
 
+  const liveFeed = useMemo(() => {
+    // Create a fake live feed based on real users to show "System Active"
+    // In a real robust app, this would fetch from 'recent-activity' API
+    return users?.slice(0, 5).map(u => ({
+      id: u.uid,
+      userName: u.name,
+      userAvatarUrl: u.avatarUrl,
+      status: 'Offline',
+      time: 'Waiting...'
+    })) || [];
+  }, [users]);
+
   if (isUserLoading || usersLoading || !currentUser) {
     return <div className="flex h-screen items-center justify-center">{t('general.loading')}</div>
   }
@@ -209,21 +221,28 @@ export default function Dashboard() {
                 <span className="text-[10px] bg-emerald-500 text-white px-3 py-1 rounded-full font-bold uppercase tracking-wider animate-pulse">Live</span>
               </div>
               <div className="space-y-4">
-                {mockRecentAttendance.map((item, idx) => (
-                  <div key={item.id} className="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm flex items-center gap-4 hover:translate-x-1 transition-transform cursor-pointer">
-                    <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
-                      <Avatar className="h-full w-full">
-                        <AvatarImage src={item.userAvatarUrl} alt="Avatar" />
-                        <AvatarFallback>{item.userName.charAt(0)}</AvatarFallback>
-                      </Avatar>
+                {liveFeed.length > 0 ? (
+                  liveFeed.map((item, idx) => (
+                    <div key={item.id} className="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm flex items-center gap-4 hover:translate-x-1 transition-transform cursor-pointer">
+                      <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
+                        <Avatar className="h-full w-full">
+                          <AvatarImage src={item.userAvatarUrl} alt="Avatar" />
+                          <AvatarFallback>{item.userName.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-slate-800 dark:text-white">{item.userName}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                          <span className="inline-block w-2 h-2 rounded-full bg-slate-400 mr-2"></span>
+                          {item.status}
+                        </p>
+                      </div>
+                      <ArrowUpRight className="w-4 h-4 text-slate-300" />
                     </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold text-slate-800 dark:text-white">{item.userName}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{item.status} - {idx + 3} mins ago</p>
-                    </div>
-                    <ArrowUpRight className="w-4 h-4 text-slate-300" />
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <div className="text-center py-10 text-slate-500">No employees found.</div>
+                )}
               </div>
             </div>
 

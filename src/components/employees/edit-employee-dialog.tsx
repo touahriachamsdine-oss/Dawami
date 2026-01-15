@@ -61,10 +61,10 @@ export function EditEmployeeDialog({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: user.name,
-      email: user.email,
-      rank: user.rank,
-      nationalId: user.nationalId,
+      email: z.string().email('Invalid email address.'),
+      rank: z.string().min(2, 'Rank is required.'),
+      fingerprintId: z.coerce.number().min(1).optional(),
+      nationalId: z.string().optional(),
       // birthDate: user.birthDate ? new Date(user.birthDate) : undefined, // Handled in render maybe
       maritalStatus: user.maritalStatus,
       childrenCount: user.childrenCount,
@@ -134,19 +134,34 @@ export function EditEmployeeDialog({
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="baseSalary"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('general.baseSalary')}</FormLabel>
-                  <FormControl>
-                    <Input type="number" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="baseSalary"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('general.baseSalary')}</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="fingerprintId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Fingerprint ID</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="e.g. 1" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <div className="grid grid-cols-2 gap-4">
               <FormField

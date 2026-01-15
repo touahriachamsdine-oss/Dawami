@@ -22,45 +22,58 @@ export async function POST(req: Request) {
 
         const todayStr = new Date().toISOString().split('T')[0];
 
-        // Check if already clocked in
-        const existing = await prisma.attendance.findFirst({
+        // Efficient Logic: Get the MOST RECENT attendance record for today
+        const lastRecord = await prisma.attendance.findFirst({
             where: {
                 userId: user.id,
                 date: todayStr
-            }
+            },
+            orderBy: {
+                createdAt: 'desc'
+            } // Get the latest one
         });
 
-        // Advanced Attendance Logic (Clock In -> Out -> In -> Out)
-        let attendance = existing;
+        let attendance;
         let message = "";
+        const now = new Date();
+        const DEBOUNCE_SECONDS = 30; // Prevent double-scans within 30 seconds
 
-        if (!existing) {
-            // 1. First Clock In (Start Day)
+        // Helper to check time difference
+        const isTooSoon = (time: Date) => (now.getTime() - new Date(time).getTime()) < (DEBOUNCE_SECONDS * 1000);
+
+        if (!lastRecord || lastRecord.checkOutTime) {
+            // Case 1: No record yet, OR the last session is closed (Clocked Out).
+            // Action: Start NEW Session (Clock In)
+
+            // Anti-bounce: Check if we just clocked out (if lastRecord exists)
+            if (lastRecord && lastRecord.checkOutTime && isTooSoon(lastRecord.checkOutTime)) {
+                return NextResponse.json({ message: "Ignored (Too soon)", user: user.name });
+            }
+
             attendance = await prisma.attendance.create({
                 data: {
                     userId: user.id,
                     date: todayStr,
-                    checkInTime: new Date(),
+                    checkInTime: now,
                     status: 'Present'
                 }
             });
-            message = `Welcome, ${user.name}!`;
-        } else if (existing.checkInTime && !existing.checkOutTime) {
-            // 2. Currently In -> Clock Out (Break/Home)
+            message = `Welcome In, ${user.name}!`;
+
+        } else {
+            // Case 2: Last record is Open (No CheckOut).
+            // Action: Close Session (Clock Out)
+
+            // Anti-bounce: Check if we just clocked in
+            if (lastRecord.checkInTime && isTooSoon(lastRecord.checkInTime)) {
+                return NextResponse.json({ message: "Ignored (Too soon)", user: user.name });
+            }
+
             attendance = await prisma.attendance.update({
-                where: { id: existing.id },
-                data: { checkOutTime: new Date() }
+                where: { id: lastRecord.id },
+                data: { checkOutTime: now }
             });
             message = `Goodbye, ${user.name}!`;
-        } else if (existing.checkInTime && existing.checkOutTime) {
-            // 3. Currently Out -> Clock In Again (Return from Break)
-            // *Note: Simple schema only supports one pair. To support multiple, we Reset CheckOut or create a new record.
-            // For simplicity in this version, we will toggle CheckOut to null to indicate "Back In".
-            attendance = await prisma.attendance.update({
-                where: { id: existing.id },
-                data: { checkOutTime: null } // Resetting checkout means they are "In" again
-            });
-            message = `Welcome back, ${user.name}!`;
         }
 
         revalidatePath('/dashboard');
