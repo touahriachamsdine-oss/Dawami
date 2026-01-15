@@ -50,3 +50,61 @@ export async function updateSensorStatus(status: string, message?: string) {
         throw error;
     }
 }
+// ... existing exports ...
+
+export async function startEnrollment(targetId: number) {
+    try {
+        await prisma.sensorStatus.upsert({
+            where: { id: 'default' },
+            update: {
+                enrollmentMode: true,
+                enrollmentTargetId: targetId,
+                message: `Waiting for sensor to enroll ID #${targetId}...`
+            },
+            create: {
+                id: 'default',
+                status: 'Online',
+                enrollmentMode: true,
+                enrollmentTargetId: targetId,
+                message: `Waiting for sensor to enroll ID #${targetId}...`
+            }
+        });
+        return { success: true };
+    } catch (error) {
+        console.error("Error starting enrollment:", error);
+        return { success: false, error };
+    }
+}
+
+export async function checkEnrollmentStatus() {
+    try {
+        const sensor = await prisma.sensorStatus.findUnique({
+            where: { id: 'default' }
+        });
+
+        // If enrollmentMode is false, it means the process finished (either success or cancelled/timeout)
+        // We assume the ESP32 sets it to false upon completion
+        return {
+            active: sensor?.enrollmentMode || false,
+            message: sensor?.message
+        };
+    } catch (error) {
+        return { active: false, message: "Error checking status" };
+    }
+}
+
+export async function cancelEnrollment() {
+    try {
+        await prisma.sensorStatus.update({
+            where: { id: 'default' },
+            data: {
+                enrollmentMode: false,
+                enrollmentTargetId: null,
+                message: "Enrollment cancelled."
+            }
+        });
+        return { success: true };
+    } catch (error) {
+        return { success: false };
+    }
+}

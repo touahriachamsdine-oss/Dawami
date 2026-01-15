@@ -99,4 +99,6 @@ model SensorStatus {
   lastSeen  DateTime @default(now())
   message   String?
   updatedAt DateTime @updatedAt
+  enrollmentMode Boolean @default(false)
+  enrollmentTargetId Int?
 }

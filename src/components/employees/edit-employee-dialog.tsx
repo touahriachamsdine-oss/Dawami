@@ -17,7 +17,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Checkbox } from '../ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { useMemo } from 'react';
+import { useMemo, useEffect, useState } from 'react';
+import { startEnrollment, checkEnrollmentStatus } from '@/lib/actions/sensor-actions';
+import { Loader2, Fingerprint } from 'lucide-react';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -48,6 +50,8 @@ export function EditEmployeeDialog({
   t
 }: EditEmployeeDialogProps) {
   const { toast } = useToast();
+  const [isEnrolling, setIsEnrolling] = useState(false);
+  const [enrollmentMessage, setEnrollmentMessage] = useState("");
 
   const weekDays = useMemo(() => [
     { id: 0, label: t('addEmployee.days.sun') },
@@ -78,6 +82,26 @@ export function EditEmployeeDialog({
     },
   });
 
+  useEffect(() => {
+    if (isOpen) {
+      form.reset({
+        name: user.name,
+        email: user.email,
+        rank: user.rank,
+        fingerprintId: user.fingerprintId,
+        nationalId: user.nationalId,
+        cnasNumber: user.cnasNumber,
+        // birthDate: user.birthDate ? new Date(user.birthDate) : undefined, 
+        maritalStatus: user.maritalStatus,
+        childrenCount: user.childrenCount,
+        phoneNumber: user.phoneNumber,
+        baseSalary: user.baseSalary,
+        role: user.role,
+        workDays: user.workDays || [1, 2, 3, 4, 5],
+      });
+    }
+  }, [isOpen, user, form]);
+
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     console.log('Updated user data:', values);
     toast({
@@ -85,6 +109,33 @@ export function EditEmployeeDialog({
       description: t('employees.updatedDesc').replace('{name}', values.name),
     })
     setIsOpen(false);
+  };
+
+  const handleEnrollment = async () => {
+    const id = form.getValues('fingerprintId');
+    if (!id) {
+      toast({ title: "Error", description: "Please enter a Fingerprint ID to enroll to.", variant: "destructive" });
+      return;
+    }
+
+    setIsEnrolling(true);
+    setEnrollmentMessage("Requesting sensor...");
+
+    // Start enrollment on backend
+    await startEnrollment(id);
+
+    // Poll for status
+    const interval = setInterval(async () => {
+      const status = await checkEnrollmentStatus();
+      setEnrollmentMessage(status.message || "Initializing...");
+
+      if (!status.active) {
+        clearInterval(interval);
+        setIsEnrolling(false);
+        setEnrollmentMessage("");
+        toast({ title: "Enrollment Finished", description: status.message || "Process complete." });
+      }
+    }, 1500);
   };
 
   return (
@@ -157,9 +208,21 @@ export function EditEmployeeDialog({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Fingerprint ID</FormLabel>
-                    <FormControl>
-                      <Input type="number" placeholder="e.g. 1" {...field} />
-                    </FormControl>
+                    <div className="flex gap-2">
+                      <FormControl>
+                        <Input type="number" placeholder="e.g. 1" {...field} />
+                      </FormControl>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant={isEnrolling ? "destructive" : "default"}
+                        onClick={handleEnrollment}
+                        disabled={isEnrolling}
+                      >
+                        {isEnrolling ? <Loader2 className="h-4 w-4 animate-spin" /> : <Fingerprint className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                    {isEnrolling && <p className="text-xs text-orange-500 font-medium animate-pulse">{enrollmentMessage}</p>}
                     <FormMessage />
                   </FormItem>
                 )}

@@ -11,6 +11,32 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
+        // Check if we are in enrollment mode
+        // If the sensor reports "ENROLL_SUCCESS", turn off enrollment mode
+        if (status === "ENROLL_SUCCESS") {
+            await prisma.sensorStatus.update({
+                where: { id: 'default' },
+                data: {
+                    enrollmentMode: false,
+                    enrollmentTargetId: null,
+                    message: `Enrollment Success! ${message || ''}`
+                }
+            });
+            return NextResponse.json({ command: "IDLE" });
+        }
+
+        if (status === "ENROLL_FAILED") {
+            await prisma.sensorStatus.update({
+                where: { id: 'default' },
+                data: {
+                    enrollmentMode: false,
+                    enrollmentTargetId: null,
+                    message: `Enrollment Failed: ${message || 'Unknown error'}`
+                }
+            });
+            return NextResponse.json({ command: "IDLE" });
+        }
+
         const sensor = await prisma.sensorStatus.upsert({
             where: { id: 'default' },
             update: {
@@ -26,7 +52,16 @@ export async function POST(req: Request) {
             }
         });
 
-        return NextResponse.json(sensor);
+        // Respond with command if there is one
+        if (sensor.enrollmentMode && sensor.enrollmentTargetId) {
+            return NextResponse.json({
+                ...sensor,
+                command: "ENROLL",
+                targetId: sensor.enrollmentTargetId
+            });
+        }
+
+        return NextResponse.json({ ...sensor, command: "IDLE" });
     } catch (error) {
         console.error("Error in sensor API:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
