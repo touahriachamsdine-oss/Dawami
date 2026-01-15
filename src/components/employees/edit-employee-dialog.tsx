@@ -112,7 +112,24 @@ export function EditEmployeeDialog({
   };
 
   const handleEnrollment = async () => {
-    const id = form.getValues('fingerprintId');
+    let id = form.getValues('fingerprintId');
+
+    // If no ID provided, fetch the next available one
+    if (!id) {
+      try {
+        const response = await fetch('/api/sensor/next-id');
+        const data = await response.json();
+        if (data.nextId) {
+          id = data.nextId;
+          form.setValue('fingerprintId', id);
+          toast({ title: "Auto-ID Assigned", description: `Assigned next available ID: ${id}` });
+        }
+      } catch (error) {
+        toast({ title: "Error", description: "Could not auto-generate ID. Please enter one manually.", variant: "destructive" });
+        return;
+      }
+    }
+
     if (!id) {
       toast({ title: "Error", description: "Please enter a Fingerprint ID to enroll to.", variant: "destructive" });
       return;
