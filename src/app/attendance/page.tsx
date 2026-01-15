@@ -224,11 +224,35 @@ export default function AttendancePage() {
               )}
             </CardHeader>
             <CardContent>
-              {displayUserId ? (
-                <AttendanceCalendar attendance={attendanceData || []} workDays={selectedUser?.workDays} t={t} />
-              ) : (
-                <p>{t('attendance.pleaseSelect')}</p>
-              )}
+              <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-100 dark:border-slate-800">
+                {displayUserId ? (
+                  <AttendanceCalendar attendance={attendanceData || []} workDays={selectedUser?.workDays} t={t} />
+                ) : (
+                  <div className="text-center py-10 text-slate-500">
+                    <p>{t('attendance.pleaseSelect')}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Legend / Examples */}
+              <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-100 dark:border-green-900/50">
+                  <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                  <span className="text-xs font-semibold text-green-700 dark:text-green-400">Present</span>
+                </div>
+                <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-100 dark:border-red-900/50">
+                  <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                  <span className="text-xs font-semibold text-red-700 dark:text-red-400">Absent</span>
+                </div>
+                <div className="flex items-center gap-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl border border-yellow-100 dark:border-yellow-900/50">
+                  <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                  <span className="text-xs font-semibold text-yellow-700 dark:text-yellow-400">Late</span>
+                </div>
+                <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-900/50">
+                  <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                  <span className="text-xs font-semibold text-blue-700 dark:text-blue-400">Rest Day</span>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </main>

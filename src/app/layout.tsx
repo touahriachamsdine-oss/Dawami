@@ -13,8 +13,8 @@ const ptSans = PT_Sans({
 });
 
 export const metadata: Metadata = {
-  title: 'Solminder',
-  description: 'Smart HR Management',
+  title: 'Dawami',
+  description: 'Smart Attendance & HR Management',
   manifest: '/manifest.json',
 };
 

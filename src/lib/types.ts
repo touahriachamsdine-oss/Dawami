@@ -16,6 +16,11 @@ export type User = {
   startDate?: string;
   jobDescription?: string;
   fingerprintId?: number;
+  nationalId?: string;
+  birthDate?: string;
+  maritalStatus?: string;
+  childrenCount?: number;
+  phoneNumber?: string;
 };
 
 export type Attendance = {
@@ -43,4 +48,4 @@ export type Setting = {
   companyAddress: string;
 }
 
-    
+

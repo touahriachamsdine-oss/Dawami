@@ -59,6 +59,18 @@ export const columns = (t: (key: string) => string): ColumnDef<User>[] => [
     ),
   },
   {
+    accessorKey: "nationalId",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="National ID" />
+    ),
+  },
+  {
+    accessorKey: "phoneNumber",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Phone" />
+    )
+  },
+  {
     accessorKey: "baseSalary",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title={t('general.baseSalary')} />
@@ -82,7 +94,7 @@ export const columns = (t: (key: string) => string): ColumnDef<User>[] => [
       return <div>{rate}%</div>;
     },
   },
-    {
+  {
     accessorKey: "role",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title={t('general.role')} />

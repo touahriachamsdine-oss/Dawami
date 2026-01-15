@@ -30,6 +30,11 @@ model User {
   startDate       DateTime?
   jobDescription  String?
   fingerprintId   Int?
+  nationalId      String?
+  birthDate       DateTime?
+  maritalStatus   String?         @default("Single") // Single, Married, Divorced, etc.
+  childrenCount   Int             @default(0)
+  phoneNumber     String?
   attendances     Attendance[]
   payrollRecords  PayrollRecord[]
   createdAt       DateTime        @default(now())
