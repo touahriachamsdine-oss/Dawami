@@ -6,6 +6,8 @@ import {
   Users,
   Clock,
   CalendarIcon,
+  Loader2,
+  Fingerprint,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -46,7 +48,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Textarea } from '@/components/ui/textarea';
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { startEnrollment, checkEnrollmentStatus } from '@/lib/actions/sensor-actions';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -71,6 +74,8 @@ export default function AddEmployeePage() {
   const router = useRouter();
   const { toast } = useToast();
   const { t } = useLanguage();
+  const [isEnrolling, setIsEnrolling] = useState(false);
+  const [enrollmentMessage, setEnrollmentMessage] = useState("");
 
   const weekDays = useMemo(() => [
     { id: 0, label: t('addEmployee.days.sun') },
@@ -109,6 +114,33 @@ export default function AddEmployeePage() {
       router.replace('/dashboard');
     }
   }, [isUserLoading, currentUser, router]);
+
+  const handleEnrollment = async () => {
+    const id = form.getValues('fingerprintId');
+    if (!id) {
+      toast({ title: "Error", description: "Please enter a Fingerprint ID to enroll to.", variant: "destructive" });
+      return;
+    }
+
+    setIsEnrolling(true);
+    setEnrollmentMessage("Requesting sensor...");
+
+    // Start enrollment on backend
+    await startEnrollment(id);
+
+    // Poll for status
+    const interval = setInterval(async () => {
+      const status = await checkEnrollmentStatus();
+      setEnrollmentMessage(status.message || "Initializing...");
+
+      if (!status.active) {
+        clearInterval(interval);
+        setIsEnrolling(false);
+        setEnrollmentMessage("");
+        toast({ title: "Enrollment Finished", description: status.message || "Process complete." });
+      }
+    }, 1500);
+  };
 
   const onSubmit = async (values: FormValues) => {
     if (!auth || !firestore) return;
@@ -261,7 +293,21 @@ export default function AddEmployeePage() {
                     <FormField control={form.control} name="fingerprintId" render={({ field }) => (
                       <FormItem>
                         <FormLabel>Fingerprint ID</FormLabel>
-                        <FormControl><Input type="number" placeholder="Enter ID from Sensor" {...field} /></FormControl>
+                        <div className="flex gap-2">
+                          <FormControl>
+                            <Input type="number" placeholder="e.g. 1" {...field} />
+                          </FormControl>
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant={isEnrolling ? "destructive" : "default"}
+                            onClick={handleEnrollment}
+                            disabled={isEnrolling}
+                          >
+                            {isEnrolling ? <Loader2 className="h-4 w-4 animate-spin" /> : <Fingerprint className="h-4 w-4" />}
+                          </Button>
+                        </div>
+                        {isEnrolling && <p className="text-xs text-orange-500 font-medium animate-pulse">{enrollmentMessage}</p>}
                         <FormMessage />
                       </FormItem>
                     )} />
