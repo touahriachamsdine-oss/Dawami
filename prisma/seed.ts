@@ -44,17 +44,52 @@ async function main() {
             attendanceRate: 95,
             daysAbsent: 1,
             accountStatus: 'Approved',
-            fingerprintId: 101,
+            fingerprintId: 2,
             workDays: '1,2,3,4,5'
         }
     ]
 
-    for (const user of users) {
-        await prisma.user.upsert({
-            where: { uid: user.uid },
-            update: user as any,
-            create: user as any,
+    for (const userData of users) {
+        const user = await prisma.user.upsert({
+            where: { uid: userData.uid },
+            update: userData as any,
+            create: userData as any,
         })
+
+        // Seed some attendance records for the last 5 days
+        const last5Days = [0, 1, 2, 3, 4, 5].map(offset => {
+            const d = new Date();
+            d.setDate(d.getDate() - offset);
+            return d;
+        });
+
+        for (const date of last5Days) {
+            const dateStr = date.toISOString().split('T')[0];
+
+            // Randomly skip some days for "Absent" look
+            if (Math.random() > 0.8) continue;
+
+            const checkIn = new Date(date);
+            checkIn.setHours(8, Math.floor(Math.random() * 30), 0);
+
+            const checkOut = new Date(date);
+            checkOut.setHours(17, Math.floor(Math.random() * 30), 0);
+
+            await prisma.attendance.upsert({
+                where: {
+                    id: `${user.id}-${dateStr}` // Deterministic ID for upsert
+                },
+                create: {
+                    id: `${user.id}-${dateStr}`,
+                    userId: user.id,
+                    date: dateStr,
+                    checkInTime: checkIn,
+                    checkOutTime: checkOut,
+                    status: 'Present'
+                },
+                update: {}
+            });
+        }
     }
 
     console.log('Seeding completed.')

@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useLanguage } from '@/lib/language-provider';
+import { generatePaySlip } from '@/lib/pdf-utils';
 
 interface PayrollRow extends PayrollInput {
     id?: string;
@@ -286,7 +287,10 @@ export default function PayrollGrid({ currentMonth }: { currentMonth: string }) 
                     <Button variant="outline" size="sm" onClick={() => toast({ title: t('payroll.messages.comingSoon'), description: t('payroll.messages.exportNotice') })}>
                         <Download className="mr-2 h-4 w-4" /> {t('payroll.exportCsv')}
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => toast({ title: t('payroll.messages.comingSoon'), description: t('payroll.messages.pdfNotice') })}>
+                    <Button variant="outline" size="sm" onClick={() => {
+                        data.forEach(row => generatePaySlip(row, currentMonth));
+                        toast({ title: t('payroll.messages.success'), description: t('payroll.messages.pdfNotice') });
+                    }}>
                         <FileText className="mr-2 h-4 w-4" /> {t('payroll.pdfSlips')}
                     </Button>
                 </div>
@@ -435,6 +439,15 @@ export default function PayrollGrid({ currentMonth }: { currentMonth: string }) 
                                                 }}
                                             >
                                                 <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8 text-primary"
+                                                title="Export PDF"
+                                                onClick={() => generatePaySlip(row, currentMonth)}
+                                            >
+                                                <FileText className="h-4 w-4" />
                                             </Button>
                                         </div>
                                     </TableCell>

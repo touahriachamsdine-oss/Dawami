@@ -30,9 +30,10 @@ export type Attendance = {
   userName: string;
   userAvatarUrl?: string;
   date: string;
-  checkInTime?: any; // Can be a server timestamp
-  checkOutTime?: any; // Can be a server timestamp
+  checkInTime?: any; // Can be a server timestamp or Date
+  checkOutTime?: any; // Can be a server timestamp or Date
   status: 'Present' | 'Absent' | 'Late' | 'On Leave';
+  createdAt?: any;
 };
 
 export type Salary = {
