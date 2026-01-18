@@ -39,6 +39,10 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import { BottomNavBar } from "@/components/ui/bottom-nav-bar";
 import { Sidebar } from "@/components/sidebar";
 import { useRouter } from "next/navigation";
+import { LiveAttendanceFeed } from "@/components/attendance/live-feed";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 export default function AttendancePage() {
   const { auth, firestore, user: authUser, isUserLoading } = useFirebase();
@@ -87,6 +91,28 @@ export default function AttendancePage() {
   }, [firestore, selectedUser, currentUser?.role, displayUserId, users]);
 
   const { data: attendanceData, isLoading: attendanceLoading } = useCollection<Attendance>(attendanceQuery);
+
+  const allAttendanceQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'attendance');
+  }, [firestore]);
+
+  const { data: allAttendance } = useCollection<Attendance>(allAttendanceQuery);
+
+  const liveAttendance = useMemo(() => {
+    if (!allAttendance || !users) return [];
+    return [...allAttendance]
+      .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
+      .slice(0, 5)
+      .map(att => {
+        const user = users.find(u => u.uid === att.userId);
+        return {
+          ...att,
+          userName: user?.name || 'Unknown',
+          userAvatarUrl: user?.avatarUrl,
+        };
+      });
+  }, [allAttendance, users]);
 
   if (currentUser?.role === 'Admin' && !selectedUserId && users && users.length > 0) {
     setSelectedUserId(users[0].uid);
@@ -199,62 +225,68 @@ export default function AttendancePage() {
             </DropdownMenuContent>
           </DropdownMenu>
         </header>
-        <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 pb-20 md:pb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>{t('attendance.title')}</CardTitle>
-                <CardDescription>
-                  {currentUser?.role === 'Admin' ? t('attendance.descriptionAdmin') : t('attendance.descriptionEmployee')}
-                </CardDescription>
-              </div>
-              {currentUser?.role === 'Admin' && users && (
-                <div className="w-[200px]">
-                  <Select onValueChange={setSelectedUserId} value={selectedUserId || ''}>
-                    <SelectTrigger>
-                      <SelectValue placeholder={t('attendance.selectEmployee')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {users.map(user => (
-                        <SelectItem key={user.uid} value={user.uid}>{user.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-            </CardHeader>
-            <CardContent>
-              <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-100 dark:border-slate-800">
-                {displayUserId ? (
-                  <AttendanceCalendar attendance={attendanceData || []} workDays={selectedUser?.workDays} t={t} />
-                ) : (
-                  <div className="text-center py-10 text-slate-500">
-                    <p>{t('attendance.pleaseSelect')}</p>
+        <main className="flex flex-1 flex-col gap-8 p-4 md:p-8 pb-20 md:pb-8 max-w-7xl mx-auto w-full">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-8">
+              <Card className="border-none shadow-xl shadow-slate-200/50 dark:shadow-none bg-white dark:bg-slate-900 rounded-[32px] overflow-hidden">
+                <CardHeader className="flex flex-row items-center justify-between p-8 pb-4">
+                  <div>
+                    <CardTitle className="text-2xl font-black text-navy-deep dark:text-white">{t('attendance.title')}</CardTitle>
+                    <CardDescription className="text-sm font-medium">
+                      {currentUser?.role === 'Admin' ? t('attendance.descriptionAdmin') : t('attendance.descriptionEmployee')}
+                    </CardDescription>
                   </div>
-                )}
-              </div>
+                  {currentUser?.role === 'Admin' && users && (
+                    <div className="w-[220px]">
+                      <Select onValueChange={setSelectedUserId} value={selectedUserId || ''}>
+                        <SelectTrigger className="rounded-2xl border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 font-bold">
+                          <SelectValue placeholder={t('attendance.selectEmployee')} />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-2xl">
+                          {users.map(user => (
+                            <SelectItem key={user.uid} value={user.uid}>{user.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </CardHeader>
+                <CardContent className="p-8 pt-0">
+                  <div className="bg-slate-50 dark:bg-slate-950/50 p-1 rounded-[2.5rem] border border-slate-100 dark:border-slate-800">
+                    {displayUserId ? (
+                      <AttendanceCalendar attendance={attendanceData || []} workDays={selectedUser?.workDays} t={t} />
+                    ) : (
+                      <div className="text-center py-20 text-slate-500">
+                        <Activity className="w-12 h-12 mx-auto mb-4 opacity-20" />
+                        <p className="font-bold">{t('attendance.pleaseSelect')}</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
 
-              {/* Legend / Examples */}
-              <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-100 dark:border-green-900/50">
-                  <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                  <span className="text-xs font-semibold text-green-700 dark:text-green-400">Present</span>
-                </div>
-                <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-100 dark:border-red-900/50">
-                  <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                  <span className="text-xs font-semibold text-red-700 dark:text-red-400">Absent</span>
-                </div>
-                <div className="flex items-center gap-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl border border-yellow-100 dark:border-yellow-900/50">
-                  <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                  <span className="text-xs font-semibold text-yellow-700 dark:text-yellow-400">Late</span>
-                </div>
-                <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-900/50">
-                  <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                  <span className="text-xs font-semibold text-blue-700 dark:text-blue-400">Rest Day</span>
-                </div>
+              {/* Stats / Badges */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[
+                  { label: 'Present', color: 'bg-green-500', bg: 'bg-green-50 dark:bg-green-900/20', border: 'border-green-100 dark:border-green-900/50', text: 'text-green-700 dark:text-green-400' },
+                  { label: 'Absent', color: 'bg-red-500', bg: 'bg-red-50 dark:bg-red-900/20', border: 'border-red-100 dark:border-red-900/50', text: 'text-red-700 dark:text-red-400' },
+                  { label: 'Late', color: 'bg-yellow-500', bg: 'bg-yellow-50 dark:bg-yellow-900/20', border: 'border-yellow-100 dark:border-yellow-900/50', text: 'text-yellow-700 dark:text-yellow-400' },
+                  { label: 'Rest Day', color: 'bg-blue-500', bg: 'bg-blue-50 dark:bg-blue-900/20', border: 'border-blue-100 dark:border-blue-900/50', text: 'text-blue-700 dark:text-blue-400' },
+                ].map((item) => (
+                  <div key={item.label} className={cn("flex items-center gap-3 p-4 rounded-3xl border transition-transform hover:scale-105", item.bg, item.border)}>
+                    <div className={cn("w-3 h-3 rounded-full shadow-sm", item.color)}></div>
+                    <span className={cn("text-xs font-black uppercase tracking-tight", item.text)}>{item.label}</span>
+                  </div>
+                ))}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+
+            <div className="lg:col-span-1">
+              <div className="sticky top-24">
+                <LiveAttendanceFeed attendance={liveAttendance} />
+              </div>
+            </div>
+          </div>
         </main>
         <BottomNavBar userRole={currentUser.role} />
       </div>

@@ -65,29 +65,7 @@ export default function Dashboard() {
 
   const { data: users, isLoading: usersLoading } = useCollection<User>(usersQuery);
 
-  const attendanceQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return collection(firestore, 'attendance');
-  }, [firestore]);
 
-  const { data: attendanceData, isLoading: attendanceLoading } = useCollection<Attendance>(attendanceQuery);
-
-  const liveAttendance = useMemo(() => {
-    if (!attendanceData || !users) return [];
-
-    // Sort by createdAt desc and take top 5
-    return [...attendanceData]
-      .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
-      .slice(0, 5)
-      .map(att => {
-        const user = users.find(u => u.uid === att.userId);
-        return {
-          ...att,
-          userName: user?.name || 'Unknown',
-          userAvatarUrl: user?.avatarUrl,
-        };
-      });
-  }, [attendanceData, users]);
 
   const currentUserQuery = useMemoFirebase(() => {
     if (!firestore || !authUser) return null;
@@ -220,78 +198,6 @@ export default function Dashboard() {
             </Link>
           </div>
 
-          {/* Live Feed for Admin */}
-          {currentUser?.role === 'Admin' && (
-            <Card className="mt-12 overflow-hidden border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900/50 rounded-[32px] shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between border-b border-slate-50 dark:border-slate-800 p-6">
-                <div>
-                  <CardTitle className="text-lg font-bold">Live Attendance Feed</CardTitle>
-                  <CardDescription className="text-xs">Real-time fingerprint activity</CardDescription>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                  <span className="text-[10px] font-bold uppercase text-slate-400">Live</span>
-                </div>
-              </CardHeader>
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="hover:bg-transparent border-slate-50 dark:border-slate-800">
-                      <TableHead className="pl-6 text-[10px] font-bold uppercase tracking-wider">Employee</TableHead>
-                      <TableHead className="text-[10px] font-bold uppercase tracking-wider">Status</TableHead>
-                      <TableHead className="text-[10px] font-bold uppercase tracking-wider">Time</TableHead>
-                      <TableHead className="pr-6 text-right text-[10px] font-bold uppercase tracking-wider">Date</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {liveAttendance.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={4} className="h-32 text-center text-slate-400 text-xs italic">
-                          No recent activity recorded.
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      liveAttendance.map((log) => (
-                        <TableRow key={log.id} className="border-slate-50 dark:border-slate-800 group transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
-                          <TableCell className="pl-6 py-4">
-                            <div className="flex items-center gap-3">
-                              <Avatar className="h-8 w-8 border border-slate-100 dark:border-slate-800">
-                                <AvatarImage src={log.userAvatarUrl} />
-                                <AvatarFallback>{log.userName.charAt(0)}</AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <p className="text-sm font-bold text-navy-deep dark:text-white">{log.userName}</p>
-                                <p className="text-[10px] text-slate-400 font-medium">#{log.userId.slice(-4)}</p>
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={log.checkOutTime ? "secondary" : "default"} className="rounded-full px-3 py-0.5 text-[9px] font-bold uppercase tracking-tight">
-                              {log.checkOutTime ? "Clock Out" : "Clock In"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
-                              <Clock className="w-3.5 h-3.5 text-primary" />
-                              <span className="text-xs font-mono font-bold">
-                                {log.checkOutTime
-                                  ? new Date(log.checkOutTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                                  : new Date(log.checkInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                                }
-                              </span>
-                            </div>
-                          </TableCell>
-                          <TableCell className="pr-6 text-right">
-                            <span className="text-xs font-bold text-slate-400">{log.date}</span>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          )}
         </main>
         <BottomNavBar userRole={currentUser.role} />
       </div >
