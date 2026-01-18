@@ -15,14 +15,10 @@ export function BottomNavBar({ userRole }: BottomNavBarProps) {
   const navItems = [
     { href: '/dashboard', label: t('nav.dashboard'), icon: Home },
     { href: '/attendance', label: t('nav.attendance'), icon: Activity },
-    { href: '/salary', label: t('nav.salary'), icon: DollarSign },
+    { href: '/employees', label: t('nav.employees'), icon: Users },
+    { href: '/payroll', label: t('nav.payroll'), icon: DollarSign },
+    { href: '/sensor', label: t('nav.sensor'), icon: Fingerprint },
   ];
-
-  if (userRole === 'Admin') {
-    navItems.splice(2, 0, { href: '/employees', label: t('nav.employees'), icon: Users });
-    navItems.splice(4, 0, { href: '/payroll', label: t('nav.payroll'), icon: DollarSign });
-    navItems.splice(5, 0, { href: '/sensor', label: t('nav.sensor'), icon: Fingerprint });
-  }
 
   const itemsToShow = navItems.length;
 

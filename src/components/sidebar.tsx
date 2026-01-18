@@ -25,20 +25,13 @@ export function Sidebar({ userRole }: SidebarProps) {
 
     const navItems = [
         { href: '/dashboard', label: t('nav.dashboard'), icon: LayoutDashboard },
+        { href: '/employees', label: t('nav.employees'), icon: Users },
         { href: '/attendance', label: t('nav.attendance'), icon: Activity },
         { href: '/salary', label: t('nav.salary'), icon: DollarSign },
+        { href: '/payroll', label: t('nav.payroll'), icon: DollarSign },
+        { href: '/sensor', label: t('nav.sensor'), icon: Fingerprint },
+        { href: '/settings', label: t('nav.settings'), icon: Settings },
     ];
-
-    if (userRole === 'Admin') {
-        // Insert after dashboard
-        navItems.splice(1, 0, { href: '/employees', label: t('nav.employees'), icon: Users });
-        // Add Payroll after salary
-        navItems.splice(4, 0, { href: '/payroll', label: t('nav.payroll'), icon: DollarSign });
-        // Add Sensor after payroll
-        navItems.splice(5, 0, { href: '/sensor', label: t('nav.sensor'), icon: Fingerprint });
-    }
-
-    navItems.push({ href: '/settings', label: t('nav.settings'), icon: Settings });
 
     return (
         <div className="hidden border-r border-slate-50 dark:border-slate-800 bg-white dark:bg-slate-900 md:block">
