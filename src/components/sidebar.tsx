@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname } from 'next/navigation';
 import {
     Activity,
-    Clock,
     DollarSign,
     Settings,
     Users,
@@ -27,7 +26,6 @@ export function Sidebar({ userRole }: SidebarProps) {
     const navItems = [
         { href: '/dashboard', label: t('nav.dashboard'), icon: LayoutDashboard },
         { href: '/attendance', label: t('nav.attendance'), icon: Activity },
-        { href: '/clock-in', label: t('nav.clockIn'), icon: Clock },
         { href: '/salary', label: t('nav.salary'), icon: DollarSign },
     ];
 
@@ -38,8 +36,6 @@ export function Sidebar({ userRole }: SidebarProps) {
         navItems.splice(4, 0, { href: '/payroll', label: t('nav.payroll'), icon: DollarSign });
         // Add Sensor after payroll
         navItems.splice(5, 0, { href: '/sensor', label: t('nav.sensor'), icon: Fingerprint });
-        // Add Applicants
-        navItems.push({ href: '/applicants', label: t('nav.newApplicants'), icon: Users });
     }
 
     navItems.push({ href: '/settings', label: t('nav.settings'), icon: Settings });

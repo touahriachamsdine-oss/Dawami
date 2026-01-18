@@ -163,19 +163,21 @@ export default function Dashboard() {
         </header>
 
         <main className="flex-1 px-6 pt-8 max-w-5xl mx-auto w-full">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-5 gap-y-10">
-            <Link href="/employees" className="relative flex flex-col items-center justify-center aspect-[1/1.1] bg-emerald-50 dark:bg-emerald-950/20 rounded-[32px] border border-emerald-100/50 dark:border-emerald-900/50 shadow-lg transition-transform active:scale-95 group">
-              <div className="mb-2 transition-transform group-hover:scale-110">
-                <div className="flex -space-x-3 items-center">
-                  <Users className="w-10 h-10 text-emerald-600 bg-white dark:bg-slate-800 p-2 rounded-full border border-emerald-50 dark:border-emerald-900" />
-                  <Users className="w-10 h-10 text-emerald-500 bg-white dark:bg-slate-800 p-2 rounded-full border border-emerald-50 dark:border-emerald-900 relative z-10 scale-110" />
-                  <Users className="w-10 h-10 text-emerald-400 bg-white dark:bg-slate-800 p-2 rounded-full border border-emerald-50 dark:border-emerald-900" />
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-5 gap-y-10">
+            {currentUser?.role === 'Admin' && (
+              <Link href="/employees" className="relative flex flex-col items-center justify-center aspect-[1/1.1] bg-emerald-50 dark:bg-emerald-950/20 rounded-[32px] border border-emerald-100/50 dark:border-emerald-900/50 shadow-lg transition-transform active:scale-95 group">
+                <div className="mb-2 transition-transform group-hover:scale-110">
+                  <div className="flex -space-x-3 items-center">
+                    <Users className="w-10 h-10 text-emerald-600 bg-white dark:bg-slate-800 p-2 rounded-full border border-emerald-50 dark:border-emerald-900" />
+                    <Users className="w-10 h-10 text-emerald-500 bg-white dark:bg-slate-800 p-2 rounded-full border border-emerald-50 dark:border-emerald-900 relative z-10 scale-110" />
+                    <Users className="w-10 h-10 text-emerald-400 bg-white dark:bg-slate-800 p-2 rounded-full border border-emerald-50 dark:border-emerald-900" />
+                  </div>
                 </div>
-              </div>
-              <div className="absolute -bottom-4 w-[85%] bg-primary py-2.5 rounded-2xl shadow-xl border border-blue-400/20 text-center">
-                <span className="text-[10px] font-extrabold text-white uppercase tracking-wider">{t('nav.employees')}</span>
-              </div>
-            </Link>
+                <div className="absolute -bottom-4 w-[85%] bg-primary py-2.5 rounded-2xl shadow-xl border border-blue-400/20 text-center">
+                  <span className="text-[10px] font-extrabold text-white uppercase tracking-wider">{t('nav.employees')}</span>
+                </div>
+              </Link>
+            )}
 
             <Link href="/attendance" className="relative flex flex-col items-center justify-center aspect-[1/1.1] bg-emerald-50 dark:bg-emerald-950/20 rounded-[32px] border border-emerald-100/50 dark:border-emerald-900/50 shadow-lg transition-transform active:scale-95 group relative shadow-inner">
               <div className="mb-2 flex items-end gap-1 transition-transform group-hover:scale-110">
@@ -187,29 +189,28 @@ export default function Dashboard() {
               </div>
             </Link>
 
-            <Link href="/clock-in" className="relative flex flex-col items-center justify-center aspect-[1/1.1] bg-emerald-50 dark:bg-emerald-950/20 rounded-[32px] border border-emerald-100/50 dark:border-emerald-900/50 shadow-lg transition-transform active:scale-95 group shadow-inner">
-              <div className="mb-2 relative flex items-center justify-center transition-transform group-hover:scale-110">
-                <Clock className="w-14 h-14 text-emerald-600" />
-                <div className="absolute bottom-0 right-0 translate-x-1 translate-y-1 bg-white dark:bg-slate-800 rounded-lg p-1 shadow-sm border border-emerald-50 dark:border-emerald-900">
-                  <Fingerprint className="w-5 h-5 text-emerald-500" />
+            {currentUser?.role === 'Admin' ? (
+              <Link href="/payroll" className="relative flex flex-col items-center justify-center aspect-[1/1.1] bg-emerald-50 dark:bg-emerald-950/20 rounded-[32px] border border-emerald-100/50 dark:border-emerald-900/50 shadow-lg transition-transform active:scale-95 group shadow-inner">
+                <div className="mb-2 relative flex items-center justify-center transition-transform group-hover:scale-110">
+                  <DollarSign className="w-12 h-12 text-emerald-600" />
+                  <div className="absolute -top-1 -right-2 bg-emerald-100 dark:bg-emerald-900 rounded-full p-1.5 border-2 border-white dark:border-slate-800">
+                    <Activity className="w-4 h-4 text-emerald-700 dark:text-emerald-300" />
+                  </div>
                 </div>
-              </div>
-              <div className="absolute -bottom-4 w-[85%] bg-primary py-2.5 rounded-2xl shadow-xl border border-blue-400/20 text-center">
-                <span className="text-[10px] font-extrabold text-white uppercase tracking-wider">{t('nav.clockIn')}</span>
-              </div>
-            </Link>
-
-            <Link href="/payroll" className="relative flex flex-col items-center justify-center aspect-[1/1.1] bg-emerald-50 dark:bg-emerald-950/20 rounded-[32px] border border-emerald-100/50 dark:border-emerald-900/50 shadow-lg transition-transform active:scale-95 group shadow-inner">
-              <div className="mb-2 relative flex items-center justify-center transition-transform group-hover:scale-110">
-                <DollarSign className="w-12 h-12 text-emerald-600" />
-                <div className="absolute -top-1 -right-2 bg-emerald-100 dark:bg-emerald-900 rounded-full p-1.5 border-2 border-white dark:border-slate-800">
-                  <Activity className="w-4 h-4 text-emerald-700 dark:text-emerald-300" />
+                <div className="absolute -bottom-4 w-[85%] bg-primary py-2.5 rounded-2xl shadow-xl border border-blue-400/20 text-center">
+                  <span className="text-[10px] font-extrabold text-white uppercase tracking-wider">{t('nav.payroll')}</span>
                 </div>
-              </div>
-              <div className="absolute -bottom-4 w-[85%] bg-primary py-2.5 rounded-2xl shadow-xl border border-blue-400/20 text-center">
-                <span className="text-[10px] font-extrabold text-white uppercase tracking-wider">{t('nav.payroll')}</span>
-              </div>
-            </Link>
+              </Link>
+            ) : (
+              <Link href="/salary" className="relative flex flex-col items-center justify-center aspect-[1/1.1] bg-emerald-50 dark:bg-emerald-950/20 rounded-[32px] border border-emerald-100/50 dark:border-emerald-900/50 shadow-lg transition-transform active:scale-95 group shadow-inner">
+                <div className="mb-2 relative flex items-center justify-center transition-transform group-hover:scale-110">
+                  <DollarSign className="w-12 h-12 text-emerald-600" />
+                </div>
+                <div className="absolute -bottom-4 w-[85%] bg-primary py-2.5 rounded-2xl shadow-xl border border-blue-400/20 text-center">
+                  <span className="text-[10px] font-extrabold text-white uppercase tracking-wider">{t('nav.salary')}</span>
+                </div>
+              </Link>
+            )}
           </div>
 
           {/* Live Feed for Admin */}
