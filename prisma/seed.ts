@@ -20,6 +20,20 @@ async function main() {
     // Seed Users
     const users = [
         {
+            uid: 'dev-admin',
+            name: 'Dev Admin',
+            email: 'dev@test.com',
+            role: 'Admin',
+            rank: 'Developer',
+            baseSalary: 10000,
+            totalSalary: 10000,
+            attendanceRate: 100,
+            daysAbsent: 0,
+            accountStatus: 'Approved',
+            fingerprintId: 0,
+            workDays: '1,2,3,4,5'
+        },
+        {
             uid: 'admin-1',
             name: 'Admin User',
             email: 'admin@solminder.com',
@@ -37,7 +51,7 @@ async function main() {
             uid: 'emp-1',
             name: 'John Doe',
             email: 'john@solminder.com',
-            role: 'Employee',
+            role: 'Admin',
             rank: 'Developer',
             baseSalary: 3000,
             totalSalary: 3000,

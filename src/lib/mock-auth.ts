@@ -24,20 +24,8 @@ export const mockAuth = {
             listeners.forEach(cb => cb(user));
             return { user };
         }
-        // If not in MOCK_USERS, check if it's the new admin we added manually
-        // Since we are in local mode, we can just allow it if it exists in DB (the caller will handle DB check usually)
-        // But here we need to return something for the auth state.
-        const newUser = {
-            uid: 'temp-' + Date.now(),
-            id: 'temp-' + Date.now(),
-            email,
-            name: email.split('@')[0],
-            role: 'Admin',
-            accountStatus: 'Approved'
-        };
-        mockAuth.currentUser = newUser;
-        listeners.forEach(cb => cb(newUser));
-        return { user: newUser };
+
+        throw new Error("User not found or unauthorized.");
     },
     createUserWithEmailAndPassword: async (auth: any, email: string) => {
         const id = Math.random().toString(36).substr(2, 9);

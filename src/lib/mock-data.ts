@@ -1,6 +1,20 @@
 
 export const MOCK_USERS = [
   {
+    uid: 'dev-admin',
+    id: 'dev-admin',
+    name: 'Dev Admin',
+    email: 'dev@test.com',
+    role: 'Admin',
+    rank: 'Developer',
+    baseSalary: 10000,
+    totalSalary: 10000,
+    attendanceRate: 100,
+    daysAbsent: 0,
+    accountStatus: 'Approved',
+    fingerprintId: 0
+  },
+  {
     uid: 'admin-1',
     id: 'admin-1',
     name: 'Admin User',
@@ -19,7 +33,7 @@ export const MOCK_USERS = [
     id: 'emp-1',
     name: 'John Doe',
     email: 'john@solminder.com',
-    role: 'Employee',
+    role: 'Admin',
     rank: 'Developer',
     baseSalary: 3000,
     totalSalary: 3000,
@@ -34,7 +48,7 @@ export const MOCK_USERS = [
     id: 'emp-2',
     name: 'Jane Smith',
     email: 'jane@solminder.com',
-    role: 'Employee',
+    role: 'Admin',
     rank: 'Designer',
     baseSalary: 3200,
     totalSalary: 3200,
