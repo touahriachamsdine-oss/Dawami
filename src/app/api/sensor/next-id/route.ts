@@ -10,7 +10,12 @@ export async function GET() {
         });
 
         const maxId = users.length > 0 ? (users[0].fingerprintId || 0) : 0;
-        const nextId = maxId + 1;
+        let nextId = maxId + 1;
+
+        // Cap at 127 for typical sensors (AS608, etc)
+        if (nextId > 127) {
+            nextId = 1; // Or handle as "Memory Full"
+        }
 
         return NextResponse.json({ nextId });
     } catch (error) {

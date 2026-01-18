@@ -22,7 +22,8 @@ import {
     Copy,
     Check
 } from 'lucide-react';
-import { getSensorStatus } from '@/lib/actions/sensor-actions';
+import { getSensorStatus, clearSensor } from '@/lib/actions/sensor-actions';
+import { useToast } from '@/hooks/use-toast';
 import { useFirebase } from '@/db';
 import {
     DropdownMenu,
@@ -41,6 +42,8 @@ export default function SensorPage() {
     const [status, setStatus] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [copied, setCopied] = useState(false);
+    const { toast } = useToast();
+    const [isClearing, setIsClearing] = useState(false);
     const router = useRouter();
 
     const fetchStatus = async () => {
@@ -65,11 +68,11 @@ export default function SensorPage() {
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <Adafruit_Fingerprint.h>
+#include <ArduinoJson.h>
 
 // Configuration
 const char* ssid = "YOUR_WIFI_SSID";
 const char* password = "YOUR_WIFI_PASSWORD";
-const char* serverUrl = "https://your-app.vercel.app/api/attendance/fingerprint";
 const char* statusUrl = "https://your-app.vercel.app/api/sensor/update";
 const char* secret = "YOUR_SENSOR_SECRET";
 
@@ -89,7 +92,7 @@ void setup() {
   finger.begin(57600);
   if (finger.verifyPassword()) {
     Serial.println("Fingerprint sensor found!");
-    updateStatus("Online", "Fingerprint sensor active and waiting...");
+    updateStatus("Online", "Ready");
   } else {
     Serial.println("Did not find fingerprint sensor :(");
     updateStatus("Error", "Sensor hardware not found.");
@@ -97,50 +100,46 @@ void setup() {
 }
 
 void loop() {
-  int id = getFingerprintID();
-  if (id > 0) {
-    sendAttendance(id);
-    delay(2000);
-  }
-  delay(50);
-}
-
-void updateStatus(String status, String msg) {
-  if(WiFi.status() == WL_CONNECTED){
+  if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
     http.begin(statusUrl);
     http.addHeader("Content-Type", "application/json");
-    String body = "{\\"status\\":\\"" + status + "\\",\\"message\\":\\"" + msg + "\\",\\"secret\\":\\"" + secret + "\\"\\}";
-    int httpResponseCode = http.POST(body);
-    http.end();
-  }
-}
 
-void sendAttendance(int id) {
-  if(WiFi.status() == WL_CONNECTED){
-    HTTPClient http;
-    http.begin(serverUrl);
-    http.addHeader("Content-Type", "application/json");
-    String body = "{\\"fingerprintId\\":\\"" + String(id) + "\\",\\"secret\\":\\"" + secret + "\\"\\}";
-    int httpResponseCode = http.POST(body);
+    String payload = "{\\"secret\\": \\"" + String(secret) + "\\", \\"status\\": \\"Online\\", \\"message\\": \\"Ready\\"}";
+    int httpResponseCode = http.POST(payload);
+
     if (httpResponseCode > 0) {
-      Serial.println("Attendance Sent: " + String(httpResponseCode));
+      String response = http.getString();
+      StaticJsonDocument<512> doc;
+      deserializeJson(doc, response);
+
+      const char* command = doc["command"];
+      
+      if (strcmp(command, "ENROLL") == 0) {
+        int targetId = doc["targetId"];
+        enrollFinger(targetId);
+      } else if (strcmp(command, "EMPTY") == 0) {
+        finger.emptyDatabase();
+        updateStatus("Online", "Sensor Database Cleared");
+      }
     }
     http.end();
   }
+  delay(3000);
 }
 
-int getFingerprintID() {
-  uint8_t p = finger.getImage();
-  if (p != FINGERPRINT_OK)  return -1;
+void enrollFinger(int id) {
+  // Add logic from Adafruit 'enroll' example here
+  // Send status "ENROLL_SUCCESS" or "ENROLL_FAILED" back to API
+}
 
-  p = finger.image2Tz();
-  if (p != FINGERPRINT_OK) return -1;
-
-  p = finger.fingerFastSearch();
-  if (p != FINGERPRINT_OK) return -1;
-  
-  return finger.fingerID;
+void updateStatus(String status, String msg) {
+  HTTPClient http;
+  http.begin(statusUrl);
+  http.addHeader("Content-Type", "application/json");
+  String body = "{\\"status\\":\\"" + status + "\\",\\"message\\":\\"" + msg + "\\",\\"secret\\":\\"" + secret + "\\"\\}";
+  http.POST(body);
+  http.end();
 }
     `.trim();
 
@@ -256,6 +255,29 @@ int getFingerprintID() {
                             </CardContent>
                         </Card>
                     </div>
+
+                    <Card className="mt-8 bg-red-50 dark:bg-red-950/20 border-red-100 dark:border-red-900/50 rounded-[32px] shadow-sm overflow-hidden p-6 flex items-center justify-between">
+                        <div>
+                            <h3 className="text-lg font-bold text-red-900 dark:text-red-400">Sensor Maintenance</h3>
+                            <p className="text-xs text-red-600 dark:text-red-500/80">If you get "Storage Error", try clearing the sensor database.</p>
+                        </div>
+                        <Button
+                            variant="destructive"
+                            className="rounded-full px-6"
+                            disabled={isClearing}
+                            onClick={async () => {
+                                if (confirm("Clear ALL fingerprints from the sensor? This cannot be undone.")) {
+                                    setIsClearing(true);
+                                    await clearSensor();
+                                    toast({ title: "Command Sent", description: "Sensor will clear database on next update." });
+                                    setTimeout(() => setIsClearing(false), 2000);
+                                }
+                            }}
+                        >
+                            {isClearing ? <RefreshCcw className="h-4 w-4 animate-spin mr-2" /> : <XCircle className="h-4 w-4 mr-2" />}
+                            Clear Sensor
+                        </Button>
+                    </Card>
 
                     <Card className="mt-12 overflow-hidden border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900/50 rounded-[32px] shadow-sm">
                         <CardHeader className="flex flex-row items-center justify-between border-b border-slate-50 dark:border-slate-800 p-6">

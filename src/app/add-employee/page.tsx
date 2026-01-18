@@ -179,7 +179,7 @@ export default function AddEmployeePage() {
         workDays: values.workDays,
         startDate: values.startDate.toISOString(),
         jobDescription: values.jobDescription,
-        fingerprintId: values.fingerprintId || Math.floor(Math.random() * 1000), // Use provided ID or random default
+        fingerprintId: values.fingerprintId || (Math.floor(Math.random() * 126) + 1), // Limit to 1-127 range for most sensors
         cnasNumber: values.cnasNumber,
       };
 

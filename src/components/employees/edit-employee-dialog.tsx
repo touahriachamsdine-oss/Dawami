@@ -32,6 +32,7 @@ const formSchema = z.object({
   childrenCount: z.coerce.number().min(0).optional(),
   phoneNumber: z.string().optional(),
   baseSalary: z.coerce.number().min(0, 'Salary must be a positive number.'),
+  fingerprintId: z.coerce.number().min(1).max(127).optional(),
   role: z.enum(['Admin', 'Employee']),
   workDays: z.array(z.number()).min(1, "Employee must work at least one day"),
 });

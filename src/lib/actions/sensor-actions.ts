@@ -108,3 +108,27 @@ export async function cancelEnrollment() {
         return { success: false };
     }
 }
+
+export async function clearSensor() {
+    try {
+        await prisma.sensorStatus.upsert({
+            where: { id: 'default' },
+            update: {
+                enrollmentMode: true,
+                enrollmentTargetId: -1,
+                message: "Clearing sensor database... Please wait."
+            },
+            create: {
+                id: 'default',
+                status: 'Online',
+                enrollmentMode: true,
+                enrollmentTargetId: -1,
+                message: "Clearing sensor database... Please wait."
+            }
+        });
+        return { success: true };
+    } catch (error) {
+        console.error("Error clearing sensor:", error);
+        return { success: false, error };
+    }
+}

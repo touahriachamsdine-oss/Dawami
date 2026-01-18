@@ -53,12 +53,20 @@ export async function POST(req: Request) {
         });
 
         // Respond with command if there is one
-        if (sensor.enrollmentMode && sensor.enrollmentTargetId) {
-            return NextResponse.json({
-                ...sensor,
-                command: "ENROLL",
-                targetId: sensor.enrollmentTargetId
-            });
+        if (sensor.enrollmentMode) {
+            if (sensor.enrollmentTargetId === -1) {
+                return NextResponse.json({
+                    ...sensor,
+                    command: "EMPTY"
+                });
+            }
+            if (sensor.enrollmentTargetId) {
+                return NextResponse.json({
+                    ...sensor,
+                    command: "ENROLL",
+                    targetId: sensor.enrollmentTargetId
+                });
+            }
         }
 
         return NextResponse.json({ ...sensor, command: "IDLE" });
