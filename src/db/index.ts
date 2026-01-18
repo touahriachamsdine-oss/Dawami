@@ -55,8 +55,11 @@ export const deleteDoc = async (docRef: any) => {
 };
 
 
-export const query = (query: any, ...queryConstraints: any[]) => {
-  return query; // LocalDB simple query mock
+export const query = (colRef: any, ...queryConstraints: any[]) => {
+  return {
+    ...colRef,
+    constraints: queryConstraints
+  };
 };
 
 import { createUser, updateUser } from '@/lib/actions/user-actions';

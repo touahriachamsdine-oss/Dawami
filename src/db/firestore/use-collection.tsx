@@ -47,11 +47,19 @@ export function useCollection<T = any>(
         const snapshotDocs = await fetchCollection(path);
         if (!isMounted) return;
 
-        const results: ResultItemType[] = snapshotDocs.map((doc: any) => ({
+        let results: ResultItemType[] = snapshotDocs.map((doc: any) => ({
           ...(doc.data as T),
           id: doc.id
         }));
 
+        // Apply constraints
+        if (memoizedTargetRefOrQuery.constraints) {
+          for (const constraint of memoizedTargetRefOrQuery.constraints) {
+            if (constraint.__mockConstraint && constraint.op === '==') {
+              results = results.filter((item: any) => item[constraint.field] === constraint.value);
+            }
+          }
+        }
 
         setData(results);
         setIsLoading(false);
