@@ -16,6 +16,7 @@ export default {
         headline: ["Plus Jakarta Sans", "sans-serif"],
         serif: ["Playfair Display", "serif"],
         code: ["monospace"],
+        "pinyon-script": ["var(--font-pinyon-script)", "cursive"],
       },
       colors: {
         background: 'hsl(var(--background))',

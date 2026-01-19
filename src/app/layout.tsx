@@ -3,13 +3,19 @@ import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from '@/db';
-import { PT_Sans } from 'next/font/google';
+import { PT_Sans, Pinyon_Script } from 'next/font/google';
 import { LanguageProvider } from '@/lib/language-provider';
 
 const ptSans = PT_Sans({
   subsets: ['latin'],
   weight: ['400', '700'],
   variable: '--font-pt-sans',
+});
+
+const pinyonScript = Pinyon_Script({
+  subsets: ['latin'],
+  weight: ['400'],
+  variable: '--font-pinyon-script',
 });
 
 export const metadata: Metadata = {
@@ -25,7 +31,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${ptSans.variable} font-body antialiased`}>
+      <body className={`${ptSans.variable} ${pinyonScript.variable} font-body antialiased`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
