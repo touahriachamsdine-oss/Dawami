@@ -11,9 +11,7 @@ import {
   Menu,
   Users,
   Fingerprint,
-  PieChart,
 } from "lucide-react";
-import { format } from "date-fns";
 import { useMemo } from "react";
 import { collection, query, where, useCollection, useFirebase, useMemoFirebase } from "@/db";
 
@@ -37,17 +35,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
 } from "@/components/ui/table";
 import { AtProfitLogo } from "@/components/icons";
 import { ThemeToggle } from "@/components/theme-toggle";
 
-import { Attendance, User } from "@/lib/types";
+import { User } from "@/lib/types";
 import { EmployeeQrCodeGenerator } from "@/components/dashboard/qr-code-generator";
 import { useLanguage } from "@/lib/language-provider";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -67,45 +59,6 @@ export default function Dashboard() {
 
   const { data: users, isLoading: usersLoading } = useCollection<User>(usersQuery);
 
-  const attendanceQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, 'attendance'), where('status', '==', 'Present'));
-  }, [firestore]);
-
-  const { data: attendanceLogs } = useCollection<Attendance>(attendanceQuery);
-
-  const workStats = useMemo(() => {
-    if (!attendanceLogs) return { week: 0, month: 0 };
-    const now = new Date();
-
-    // Copy for week calculation
-    const dWeek = new Date(now);
-    const day = dWeek.getDay();
-    const diffToSun = dWeek.getDate() - day; // Sunday is 0
-    const startOfWeek = new Date(dWeek.setDate(diffToSun));
-    startOfWeek.setHours(0, 0, 0, 0);
-
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
-    let weekHours = 0;
-    let monthHours = 0;
-
-    attendanceLogs.forEach(log => {
-      const checkInInput = log.checkInTime;
-      const checkOutInput = log.checkOutTime;
-
-      const checkIn = (checkInInput?.toDate ? checkInInput.toDate() : (checkInInput ? new Date(checkInInput) : null));
-      const checkOut = (checkOutInput?.toDate ? checkOutInput.toDate() : (checkOutInput ? new Date(checkOutInput) : null));
-
-      if (checkIn && checkOut) {
-        const diff = Math.abs(checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60);
-        if (checkIn >= startOfWeek) weekHours += diff;
-        if (checkIn >= startOfMonth) monthHours += diff;
-      }
-    });
-
-    return { week: Math.round(weekHours), month: Math.round(monthHours) };
-  }, [attendanceLogs]);
 
 
 
@@ -230,76 +183,16 @@ export default function Dashboard() {
               </Link>
             )}
 
-            <Card className="col-span-2 lg:col-span-4 rounded-[32px] border border-slate-100/50 dark:border-slate-800/50 shadow-lg bg-white dark:bg-slate-900 overflow-hidden">
-              <CardHeader className="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 px-6 py-4">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <CardTitle className="text-lg font-bold flex items-center gap-2">
-                      <Clock className="w-5 h-5 text-primary" />
-                      {t('dashboard.workHours')}
-                    </CardTitle>
-                    <CardDescription>{t('dashboard.recentActivity')}</CardDescription>
-                  </div>
-                  <div className="flex gap-4 mr-4">
-                    <div className="text-right">
-                      <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">This Week</div>
-                      <div className="text-sm font-black text-primary">{workStats.week}h</div>
-                    </div>
-                    <div className="text-right border-l pl-4">
-                      <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">This Month</div>
-                      <div className="text-sm font-black text-emerald-600">{workStats.month}h</div>
-                    </div>
-                  </div>
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href="/attendance">{t('dashboard.viewAll')}</Link>
-                  </Button>
+            {currentUser?.role === 'Admin' && (
+              <Link href="/work-hours" className="relative flex flex-col items-center justify-center aspect-[1/1.1] bg-emerald-50 dark:bg-emerald-950/20 rounded-[32px] border border-emerald-100/50 dark:border-emerald-900/50 shadow-lg transition-transform active:scale-95 group shadow-inner">
+                <div className="mb-2 relative flex items-center justify-center transition-transform group-hover:scale-110">
+                  <Clock className="w-12 h-12 text-emerald-600" />
                 </div>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>{t('dashboard.employee')}</TableHead>
-                        <TableHead>{t('dashboard.date')}</TableHead>
-                        <TableHead>{t('dashboard.checkIn')}</TableHead>
-                        <TableHead>{t('dashboard.checkOut')}</TableHead>
-                        <TableHead className="text-right">{t('dashboard.duration')}</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {attendanceLogs?.slice(0, 5).map((log) => {
-                        const checkIn = log.checkInTime?.toDate?.() || new Date(log.checkInTime);
-                        const checkOut = log.checkOutTime?.toDate?.() || (log.checkOutTime ? new Date(log.checkOutTime) : null);
-                        let duration = "-";
-                        if (checkIn && checkOut) {
-                          const diff = Math.abs(checkOut.getTime() - checkIn.getTime());
-                          const hours = Math.floor(diff / (1000 * 60 * 60));
-                          const mins = Math.floor((diff / (1000 * 60)) % 60);
-                          duration = `${hours}h ${mins}m`;
-                        }
-                        return (
-                          <TableRow key={log.id}>
-                            <TableCell className="font-medium">{log.userName}</TableCell>
-                            <TableCell>{format(new Date(log.date), "MMM dd")}</TableCell>
-                            <TableCell>{checkIn ? format(checkIn, "HH:mm") : "-"}</TableCell>
-                            <TableCell>{checkOut ? format(checkOut, "HH:mm") : "-"}</TableCell>
-                            <TableCell className="text-right font-mono">{duration}</TableCell>
-                          </TableRow>
-                        );
-                      })}
-                      {(!attendanceLogs || attendanceLogs.length === 0) && (
-                        <TableRow>
-                          <TableCell colSpan={5} className="text-center py-10 text-muted-foreground italic">
-                            No recent work hours recorded
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
+                <div className="absolute -bottom-4 w-[85%] bg-primary py-2.5 rounded-2xl shadow-xl border border-blue-400/20 text-center">
+                  <span className="text-[10px] font-extrabold text-white uppercase tracking-wider">{t('dashboard.workHours')}</span>
                 </div>
-              </CardContent>
-            </Card>
+              </Link>
+            )}
           </div>
 
         </main>

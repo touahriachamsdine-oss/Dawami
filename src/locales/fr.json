@@ -11,7 +11,7 @@
         "profile": "Profil",
         "logout": "Déconnexion",
         "myAccount": "Mon Compte",
-        "sensor": "État du Capteur"
+        "workHours": "Heures de travail"
     },
     "login": {
         "title": "Bienvenue chez AtProfit HR",

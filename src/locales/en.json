@@ -11,7 +11,7 @@
         "profile": "Profile",
         "logout": "Logout",
         "myAccount": "My Account",
-        "sensor": "Sensor Status"
+        "workHours": "Work Hours"
     },
     "login": {
         "title": "Welcome to AtProfit HR",
