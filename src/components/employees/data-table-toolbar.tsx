@@ -19,9 +19,6 @@ export function DataTableToolbar<TData>({
       <div className="flex flex-1 items-center space-x-2">
         {/* Search is now in the header */}
       </div>
-      <Button asChild>
-        <Link href="/add-employee">{t('employees.addEmployee')}</Link>
-      </Button>
     </div>
   )
 }
