@@ -230,6 +230,8 @@
         "success": "تمت إضافة الموظف",
         "successDesc": "تم إضافة {name} كموظف جديد.",
         "fail": "فشل إضافة الموظف",
+        "educationLevel": "المستوى التعليمي",
+        "experienceYears": "سنوات الخبرة",
         "days": {
             "sun": "الأحد",
             "mon": "الاثنين",

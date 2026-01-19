@@ -50,7 +50,7 @@ import { cn } from '@/lib/utils';
 import { Textarea } from '@/components/ui/textarea';
 import React, { useEffect, useMemo, useState } from 'react';
 import { startEnrollment, checkEnrollmentStatus } from '@/lib/actions/sensor-actions';
-import { SALARY_GRID_2007, calculateBaseSalary2007, INDEX_POINT_VALUE_2007 } from '@/lib/salary-scale';
+import { SALARY_GRID_2007, calculateBaseSalary2007, INDEX_POINT_VALUE_2007, EDUCATION_LEVELS, getEchelonFromExperience } from '@/lib/salary-scale';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -59,6 +59,8 @@ const formSchema = z.object({
   rank: z.string().min(2, 'Rank is required.'),
   jobDescription: z.string().optional(),
   baseSalary: z.coerce.number().min(0, 'Salary must be a positive number.'),
+  educationLevel: z.string().min(1, 'Education level is required.'),
+  experienceYears: z.coerce.number().min(0),
   fingerprintId: z.coerce.number().optional(),
   cnasNumber: z.string().optional(),
   role: z.enum(['Admin', 'Employee']),
@@ -121,6 +123,8 @@ export default function AddEmployeePage() {
       rank: '',
       jobDescription: '',
       baseSalary: 0,
+      educationLevel: '',
+      experienceYears: 0,
       role: 'Employee',
       workDays: [1, 2, 3, 4, 5],
       startDate: new Date(),
@@ -133,6 +137,30 @@ export default function AddEmployeePage() {
   }, [firestore, authUser]);
   const { data: currentUserData, isLoading: currentUserLoading } = useCollection<User>(currentUserQuery);
   const currentUser = currentUserData?.[0];
+
+  const education = form.watch('educationLevel');
+  const experience = form.watch('experienceYears');
+
+  useEffect(() => {
+    if (education) {
+      const level = EDUCATION_LEVELS.find(l => l.id === education);
+      if (level) {
+        setCalcCategory(level.category);
+        form.setValue('rank', level.suggestedRank);
+      }
+    }
+  }, [education, form]);
+
+  useEffect(() => {
+    const ech = getEchelonFromExperience(experience || 0);
+    setCalcEchelon(ech.toString());
+  }, [experience]);
+
+  useEffect(() => {
+    if (calcResult) {
+      form.setValue('baseSalary', calcResult.baseSalary);
+    }
+  }, [calcResult, form]);
 
   useEffect(() => {
     if (!isUserLoading && currentUser && currentUser.role !== 'Admin') {
@@ -216,6 +244,10 @@ export default function AddEmployeePage() {
         jobDescription: values.jobDescription,
         fingerprintId: values.fingerprintId || (Math.floor(Math.random() * 126) + 1), // Limit to 1-127 range for most sensors
         cnasNumber: values.cnasNumber,
+        educationLevel: values.educationLevel,
+        experienceYears: values.experienceYears,
+        category: calcCategory,
+        echelon: parseInt(calcEchelon) || 0,
       };
 
       await addDoc(collection(firestore, 'users'), userDoc);
@@ -336,79 +368,54 @@ export default function AddEmployeePage() {
                       </FormItem>
                     )} />
                     <div className="space-y-4">
-                      <FormField control={form.control} name="baseSalary" render={({ field }) => (
+                      <FormField control={form.control} name="educationLevel" render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t('addEmployee.baseSalary')}</FormLabel>
-                          <FormControl><Input type="number" {...field} /></FormControl>
+                          <FormLabel>{t('addEmployee.educationLevel')}</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger><SelectValue placeholder="Select level" /></SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {EDUCATION_LEVELS.map(level => (
+                                <SelectItem key={level.id} value={level.id}>{level.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                           <FormMessage />
                         </FormItem>
                       )} />
 
-                      <Card className="bg-muted/30 border-dashed">
-                        <CardHeader className="py-3 px-4">
-                          <CardTitle className="text-sm font-medium">{t('addEmployee.salaryCalculator.title')}</CardTitle>
-                        </CardHeader>
-                        <CardContent className="grid gap-4 py-3 px-4 pt-0">
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <label className="text-xs font-medium">{t('addEmployee.salaryCalculator.category')}</label>
-                              <Select onValueChange={setCalcCategory} value={calcCategory}>
-                                <SelectTrigger className="h-8 text-xs">
-                                  <SelectValue placeholder="Cat." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {SALARY_GRID_2007.map(item => (
-                                    <SelectItem key={item.category} value={item.category}>{item.category}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div className="space-y-2">
-                              <label className="text-xs font-medium">{t('addEmployee.salaryCalculator.echelon')}</label>
-                              <Select onValueChange={setCalcEchelon} value={calcEchelon}>
-                                <SelectTrigger className="h-8 text-xs">
-                                  <SelectValue placeholder="Ech." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="0">0</SelectItem>
-                                  {[...Array(12)].map((_, i) => (
-                                    <SelectItem key={i + 1} value={(i + 1).toString()}>{i + 1}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </div>
+                      <FormField control={form.control} name="experienceYears" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('addEmployee.experienceYears')}</FormLabel>
+                          <FormControl><Input type="number" min={0} {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
 
-                          {calcResult && (
-                            <div className="text-xs space-y-1 bg-background/50 p-2 rounded border">
-                              <div className="flex justify-between">
-                                <span className="text-muted-foreground">{t('addEmployee.salaryCalculator.minIndex')}:</span>
-                                <span className="font-mono">{calcResult.minIndex}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-muted-foreground">{t('addEmployee.salaryCalculator.echelonIndex')}:</span>
-                                <span className="font-mono">+{calcResult.echelonIndex}</span>
-                              </div>
-                              <div className="flex justify-between border-t pt-1 mt-1 font-bold">
-                                <span>{t('addEmployee.salaryCalculator.totalIndex')}:</span>
-                                <span className="font-mono">{calcResult.totalIndex}</span>
-                              </div>
-                              <div className="flex justify-between text-primary font-bold mt-2 pt-2 border-t">
-                                <span>{t('addEmployee.salaryCalculator.result')}:</span>
-                                <span>{calcResult.baseSalary.toLocaleString()} DA</span>
-                              </div>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                className="w-full mt-2 h-7 text-[10px]"
-                                onClick={() => form.setValue('baseSalary', calcResult.baseSalary)}
-                              >
-                                {t('addEmployee.salaryCalculator.apply')}
-                              </Button>
+                      <Card className="bg-primary/5 border-primary/20 border">
+                        <CardHeader className="py-3 px-4">
+                          <CardTitle className="text-sm font-bold flex items-center justify-between">
+                            {t('addEmployee.salaryCalculator.title')}
+                            {calcResult && <span className="text-primary">{calcResult.baseSalary.toLocaleString()} DA</span>}
+                          </CardTitle>
+                        </CardHeader>
+                        {calcResult && (
+                          <CardContent className="grid gap-2 py-3 px-4 pt-0 text-xs">
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">{t('addEmployee.salaryCalculator.category')}</span>
+                              <span className="font-mono bg-muted px-1 rounded">{calcCategory}</span>
                             </div>
-                          )}
-                        </CardContent>
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">{t('addEmployee.salaryCalculator.echelon')}</span>
+                              <span className="font-mono bg-muted px-1 rounded">{calcEchelon}</span>
+                            </div>
+                            <div className="flex justify-between mt-1 border-t pt-1">
+                              <span className="text-muted-foreground">{t('addEmployee.salaryCalculator.totalIndex')}</span>
+                              <span className="font-mono">{calcResult.totalIndex}</span>
+                            </div>
+                          </CardContent>
+                        )}
                       </Card>
                     </div>
                     <FormField control={form.control} name="fingerprintId" render={({ field }) => (

@@ -232,6 +232,8 @@
         "success": "Employé ajouté",
         "successDesc": "{name} a été ajouté en tant que nouvel employé.",
         "fail": "Échec de l'ajout de l'employé",
+        "educationLevel": "Niveau d'instruction",
+        "experienceYears": "Années d'expérience",
         "days": {
             "sun": "Dim",
             "mon": "Lun",

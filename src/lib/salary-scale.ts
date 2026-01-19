@@ -25,7 +25,34 @@ export const SALARY_GRID_2007: SalaryGridEntry[] = [
     { category: "17", minIndex: 762, echelonIndices: [38, 76, 114, 152, 191, 229, 267, 305, 343, 381, 419, 457] },
 ];
 
+export interface EducationLevel {
+    id: string;
+    label: string;
+    category: string;
+    suggestedRank: string;
+}
+
+export const EDUCATION_LEVELS: EducationLevel[] = [
+    { id: "fundamental_6", label: "Fundamental (6th Year)", category: "1", suggestedRank: "Execution Staff" },
+    { id: "fundamental_9", label: "Fundamental (9th Year / BEM)", category: "4", suggestedRank: "Clerk" },
+    { id: "secondary", label: "Secondary (Final Level)", category: "7", suggestedRank: "Assistant" },
+    { id: "bac", label: "Baccalaureate", category: "8", suggestedRank: "Officer" },
+    { id: "ts", label: "Technicien Supérieur (Bac+2)", category: "9", suggestedRank: "Senior Technician" },
+    { id: "deua", label: "DEUA (Bac+3)", category: "10", suggestedRank: "Applied Engineer" },
+    { id: "licence", label: "Licence (LMD / Bac+3)", category: "11", suggestedRank: "Administrator" },
+    { id: "master", label: "Master / Engineer (Bac+5)", category: "12", suggestedRank: "Engineer" },
+    { id: "magister", label: "Magister", category: "13", suggestedRank: "Senior Administrator" },
+    { id: "doctorate", label: "Doctorate", category: "14", suggestedRank: "Researcher" },
+    { id: "specialist", label: "Specialized Doctorate / Medicine", category: "16", suggestedRank: "Specialist" },
+];
+
 export const INDEX_POINT_VALUE_2007 = 45;
+
+export function getEchelonFromExperience(years: number): number {
+    if (years < 3) return 0;
+    const echelon = Math.floor(years / 3);
+    return Math.min(echelon, 12);
+}
 
 export function calculateBaseSalary2007(category: string, echelon: number): number {
     const entry = SALARY_GRID_2007.find(e => e.category === category);

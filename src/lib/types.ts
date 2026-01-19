@@ -22,6 +22,10 @@ export type User = {
   childrenCount?: number;
   phoneNumber?: string;
   cnasNumber?: string;
+  educationLevel?: string;
+  experienceYears?: number;
+  category?: string;
+  echelon?: number;
 };
 
 export type Attendance = {

@@ -20,6 +20,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useMemo, useEffect, useState } from 'react';
 import { startEnrollment, checkEnrollmentStatus } from '@/lib/actions/sensor-actions';
 import { Loader2, Fingerprint } from 'lucide-react';
+import { SALARY_GRID_2007, calculateBaseSalary2007, INDEX_POINT_VALUE_2007, EDUCATION_LEVELS, getEchelonFromExperience } from '@/lib/salary-scale';
+import { useFirebase, updateDoc, doc } from '@/db';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -32,6 +34,8 @@ const formSchema = z.object({
   childrenCount: z.coerce.number().min(0).optional(),
   phoneNumber: z.string().optional(),
   baseSalary: z.coerce.number().min(0, 'Salary must be a positive number.'),
+  educationLevel: z.string().min(1, 'Education level is required.'),
+  experienceYears: z.coerce.number().min(0),
   fingerprintId: z.coerce.number().min(1).max(127).optional(),
   role: z.enum(['Admin', 'Employee']),
   workDays: z.array(z.number()).min(1, "Employee must work at least one day"),
@@ -50,6 +54,7 @@ export function EditEmployeeDialog({
   user,
   t
 }: EditEmployeeDialogProps) {
+  const { firestore } = useFirebase();
   const { toast } = useToast();
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [enrollmentMessage, setEnrollmentMessage] = useState("");
@@ -78,10 +83,58 @@ export function EditEmployeeDialog({
       childrenCount: user.childrenCount,
       phoneNumber: user.phoneNumber,
       baseSalary: user.baseSalary,
+      educationLevel: user.educationLevel || '',
+      experienceYears: user.experienceYears || 0,
       role: user.role,
       workDays: user.workDays || [1, 2, 3, 4, 5],
     },
   });
+
+  const [calcCategory, setCalcCategory] = useState<string>("");
+  const [calcEchelon, setCalcEchelon] = useState<string>("0");
+  const [calcResult, setCalcResult] = useState<{ minIndex: number, echelonIndex: number, totalIndex: number, baseSalary: number } | null>(null);
+
+  const education = form.watch('educationLevel');
+  const experience = form.watch('experienceYears');
+
+  useEffect(() => {
+    if (education) {
+      const level = EDUCATION_LEVELS.find(l => l.id === education);
+      if (level) {
+        setCalcCategory(level.category);
+        form.setValue('rank', level.suggestedRank);
+      }
+    }
+  }, [education, form]);
+
+  useEffect(() => {
+    const ech = getEchelonFromExperience(experience || 0);
+    setCalcEchelon(ech.toString());
+  }, [experience]);
+
+  useEffect(() => {
+    if (calcCategory) {
+      const entry = SALARY_GRID_2007.find(e => e.category === calcCategory);
+      if (entry) {
+        const ech = parseInt(calcEchelon) || 0;
+        const echIndex = ech > 0 ? entry.echelonIndices[ech - 1] || 0 : 0;
+        const total = entry.minIndex + echIndex;
+        const salary = total * INDEX_POINT_VALUE_2007;
+        setCalcResult({
+          minIndex: entry.minIndex,
+          echelonIndex: echIndex,
+          totalIndex: total,
+          baseSalary: salary
+        });
+      }
+    }
+  }, [calcCategory, calcEchelon]);
+
+  useEffect(() => {
+    if (calcResult) {
+      form.setValue('baseSalary', calcResult.baseSalary);
+    }
+  }, [calcResult, form]);
 
   useEffect(() => {
     if (isOpen) {
@@ -97,19 +150,50 @@ export function EditEmployeeDialog({
         childrenCount: user.childrenCount,
         phoneNumber: user.phoneNumber,
         baseSalary: user.baseSalary,
+        educationLevel: user.educationLevel || '',
+        experienceYears: user.experienceYears || 0,
         role: user.role,
         workDays: user.workDays || [1, 2, 3, 4, 5],
       });
     }
   }, [isOpen, user, form]);
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    console.log('Updated user data:', values);
-    toast({
-      title: t('employees.updated'),
-      description: t('employees.updatedDesc').replace('{name}', values.name),
-    })
-    setIsOpen(false);
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (!firestore) return;
+    try {
+      const userRef = doc(firestore, 'users', user.id || '');
+      await updateDoc(userRef, {
+        name: values.name,
+        email: values.email,
+        rank: values.rank,
+        fingerprintId: values.fingerprintId,
+        nationalId: values.nationalId,
+        cnasNumber: values.cnasNumber,
+        maritalStatus: values.maritalStatus,
+        childrenCount: values.childrenCount,
+        phoneNumber: values.phoneNumber,
+        baseSalary: values.baseSalary,
+        totalSalary: values.baseSalary, // Simplified: sync total with base for now
+        educationLevel: values.educationLevel,
+        experienceYears: values.experienceYears,
+        category: calcCategory,
+        echelon: parseInt(calcEchelon) || 0,
+        role: values.role,
+        workDays: values.workDays,
+      });
+
+      toast({
+        title: t('employees.updated'),
+        description: t('employees.updatedDesc').replace('{name}', values.name),
+      });
+      setIsOpen(false);
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Update Failed',
+        description: error.message || 'An error occurred while updating.',
+      });
+    }
   };
 
   const handleEnrollment = async () => {
@@ -152,7 +236,7 @@ export function EditEmployeeDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t('employees.editTitle')}</DialogTitle>
           <DialogDescription>
@@ -174,46 +258,72 @@ export function EditEmployeeDialog({
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('general.email')}</FormLabel>
-                  <FormControl>
-                    <Input type="email" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="rank"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('general.rank')}</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="baseSalary"
+                name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('general.baseSalary')}</FormLabel>
+                    <FormLabel>{t('general.email')}</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} />
+                      <Input type="email" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+              <FormField
+                control={form.control}
+                name="rank"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('general.rank')}</FormLabel>
+                    <FormControl>
+                      <Input {...field} readOnly className="bg-muted/50" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField control={form.control} name="educationLevel" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('addEmployee.educationLevel')}</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger><SelectValue placeholder="Select level" /></SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {EDUCATION_LEVELS.map(level => (
+                        <SelectItem key={level.id} value={level.id}>{level.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )} />
+
+              <FormField control={form.control} name="experienceYears" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('addEmployee.experienceYears')}</FormLabel>
+                  <FormControl><Input type="number" min={0} {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+            </div>
+
+            <Card className="bg-primary/5 border-primary/20 border">
+              <CardHeader className="py-2 px-3">
+                <CardTitle className="text-xs font-bold flex items-center justify-between">
+                  {t('addEmployee.salaryCalculator.title')}
+                  {calcResult && <span className="text-primary">{calcResult.baseSalary.toLocaleString()} DA</span>}
+                </CardTitle>
+              </CardHeader>
+            </Card>
+
+            <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="fingerprintId"
@@ -222,7 +332,7 @@ export function EditEmployeeDialog({
                     <FormLabel>Fingerprint ID</FormLabel>
                     <div className="flex gap-2">
                       <FormControl>
-                        <Input type="number" placeholder="e.g. 1" {...field} />
+                        <Input type="number" placeholder="e.g. 1" {...field} readOnly className="bg-muted/50 cursor-not-allowed" />
                       </FormControl>
                       <Button
                         type="button"
@@ -239,9 +349,6 @@ export function EditEmployeeDialog({
                   </FormItem>
                 )}
               />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="nationalId"
@@ -255,6 +362,9 @@ export function EditEmployeeDialog({
                   </FormItem>
                 )}
               />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="cnasNumber"
@@ -391,7 +501,6 @@ export function EditEmployeeDialog({
                 </FormItem>
               )}
             />
-
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>{t('employees.cancel')}</Button>
