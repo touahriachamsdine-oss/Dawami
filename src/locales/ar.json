@@ -232,6 +232,9 @@
         "fail": "فشل إضافة الموظف",
         "educationLevel": "المستوى التعليمي",
         "experienceYears": "سنوات الخبرة",
+        "jobType": "نوع الوظيفة",
+        "fullTime": "دوام كامل",
+        "partTime": "دوام جزئي",
         "days": {
             "sun": "الأحد",
             "mon": "الاثنين",

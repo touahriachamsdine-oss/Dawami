@@ -25,7 +25,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useMemo, useEffect, useState } from 'react';
 import { startEnrollment, checkEnrollmentStatus } from '@/lib/actions/sensor-actions';
 import { Loader2, Fingerprint } from 'lucide-react';
-import { SALARY_GRID_2007, calculateBaseSalary2007, INDEX_POINT_VALUE_2007, EDUCATION_LEVELS, getEchelonFromExperience } from '@/lib/salary-scale';
+import { SALARY_GRID_2007, calculateBaseSalary2007, INDEX_POINT_VALUE_2007, EDUCATION_LEVELS, getEchelonFromExperience, INDEX_POINT_VALUE_PART_TIME } from '@/lib/salary-scale';
 import { useFirebase, updateDoc, doc } from '@/db';
 
 const formSchema = z.object({
@@ -41,6 +41,7 @@ const formSchema = z.object({
   baseSalary: z.coerce.number().min(0, 'Salary must be a positive number.'),
   educationLevel: z.string().min(1, 'Education level is required.'),
   experienceYears: z.coerce.number().min(0),
+  jobType: z.enum(['Full-time', 'Part-time']),
   fingerprintId: z.coerce.number().min(1).max(127).optional(),
   role: z.enum(['Admin', 'Employee']),
   workDays: z.array(z.number()).min(1, "Employee must work at least one day"),
@@ -90,6 +91,7 @@ export function EditEmployeeDialog({
       baseSalary: user.baseSalary,
       educationLevel: user.educationLevel || '',
       experienceYears: user.experienceYears || 0,
+      jobType: user.jobType || 'Full-time',
       role: user.role,
       workDays: user.workDays || [1, 2, 3, 4, 5],
     },
@@ -101,6 +103,7 @@ export function EditEmployeeDialog({
 
   const education = form.watch('educationLevel');
   const experience = form.watch('experienceYears');
+  const jobType = form.watch('jobType');
 
   useEffect(() => {
     if (education) {
@@ -124,7 +127,8 @@ export function EditEmployeeDialog({
         const ech = parseInt(calcEchelon) || 0;
         const echIndex = ech > 0 ? entry.echelonIndices[ech - 1] || 0 : 0;
         const total = entry.minIndex + echIndex;
-        const salary = total * INDEX_POINT_VALUE_2007;
+        const multiplier = jobType === 'Part-time' ? INDEX_POINT_VALUE_PART_TIME : INDEX_POINT_VALUE_2007;
+        const salary = total * multiplier;
         setCalcResult({
           minIndex: entry.minIndex,
           echelonIndex: echIndex,
@@ -133,7 +137,7 @@ export function EditEmployeeDialog({
         });
       }
     }
-  }, [calcCategory, calcEchelon]);
+  }, [calcCategory, calcEchelon, jobType]);
 
   useEffect(() => {
     if (calcResult) {
@@ -157,6 +161,7 @@ export function EditEmployeeDialog({
         baseSalary: user.baseSalary,
         educationLevel: user.educationLevel || '',
         experienceYears: user.experienceYears || 0,
+        jobType: user.jobType || 'Full-time',
         role: user.role,
         workDays: user.workDays || [1, 2, 3, 4, 5],
       });
@@ -181,6 +186,7 @@ export function EditEmployeeDialog({
         totalSalary: values.baseSalary, // Simplified: sync total with base for now
         educationLevel: values.educationLevel,
         experienceYears: values.experienceYears,
+        jobType: values.jobType,
         category: calcCategory,
         echelon: parseInt(calcEchelon) || 0,
         role: values.role,
@@ -318,6 +324,22 @@ export function EditEmployeeDialog({
                 </FormItem>
               )} />
             </div>
+
+            <FormField control={form.control} name="jobType" render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('addEmployee.jobType')}</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="Full-time">{t('addEmployee.fullTime')}</SelectItem>
+                    <SelectItem value="Part-time">{t('addEmployee.partTime')}</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )} />
 
             <Card className="bg-primary/5 border-primary/20 border">
               <CardHeader className="py-2 px-3">

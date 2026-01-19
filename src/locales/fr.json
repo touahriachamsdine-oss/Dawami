@@ -234,6 +234,9 @@
         "fail": "Échec de l'ajout de l'employé",
         "educationLevel": "Niveau d'instruction",
         "experienceYears": "Années d'expérience",
+        "jobType": "Type d'emploi",
+        "fullTime": "Temps plein",
+        "partTime": "Temps partiel",
         "days": {
             "sun": "Dim",
             "mon": "Lun",

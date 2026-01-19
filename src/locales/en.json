@@ -234,6 +234,9 @@
         "fail": "Failed to Add Employee",
         "educationLevel": "Education Level",
         "experienceYears": "Years of Experience",
+        "jobType": "Job Type",
+        "fullTime": "Full-time",
+        "partTime": "Part-time",
         "days": {
             "sun": "Sun",
             "mon": "Mon",

@@ -47,6 +47,7 @@ export const EDUCATION_LEVELS: EducationLevel[] = [
 ];
 
 export const INDEX_POINT_VALUE_2007 = 45;
+export const INDEX_POINT_VALUE_PART_TIME = 42;
 
 export function getEchelonFromExperience(years: number): number {
     if (years < 3) return 0;
@@ -54,12 +55,14 @@ export function getEchelonFromExperience(years: number): number {
     return Math.min(echelon, 12);
 }
 
-export function calculateBaseSalary2007(category: string, echelon: number): number {
+export function calculateBaseSalary2007(category: string, echelon: number, jobType: 'Full-time' | 'Part-time' = 'Full-time'): number {
     const entry = SALARY_GRID_2007.find(e => e.category === category);
     if (!entry) return 0;
 
     const echelonIndex = echelon > 0 ? entry.echelonIndices[echelon - 1] || 0 : 0;
     const totalIndex = entry.minIndex + echelonIndex;
 
-    return totalIndex * INDEX_POINT_VALUE_2007;
+    const multiplier = jobType === 'Part-time' ? INDEX_POINT_VALUE_PART_TIME : INDEX_POINT_VALUE_2007;
+
+    return totalIndex * multiplier;
 }

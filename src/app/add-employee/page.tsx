@@ -50,7 +50,7 @@ import { cn } from '@/lib/utils';
 import { Textarea } from '@/components/ui/textarea';
 import React, { useEffect, useMemo, useState } from 'react';
 import { startEnrollment, checkEnrollmentStatus } from '@/lib/actions/sensor-actions';
-import { SALARY_GRID_2007, calculateBaseSalary2007, INDEX_POINT_VALUE_2007, EDUCATION_LEVELS, getEchelonFromExperience } from '@/lib/salary-scale';
+import { SALARY_GRID_2007, calculateBaseSalary2007, INDEX_POINT_VALUE_2007, EDUCATION_LEVELS, getEchelonFromExperience, INDEX_POINT_VALUE_PART_TIME } from '@/lib/salary-scale';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -61,6 +61,7 @@ const formSchema = z.object({
   baseSalary: z.coerce.number().min(0, 'Salary must be a positive number.'),
   educationLevel: z.string().min(1, 'Education level is required.'),
   experienceYears: z.coerce.number().min(0),
+  jobType: z.enum(['Full-time', 'Part-time']),
   fingerprintId: z.coerce.number().optional(),
   cnasNumber: z.string().optional(),
   role: z.enum(['Admin', 'Employee']),
@@ -84,6 +85,10 @@ export default function AddEmployeePage() {
   const [calcEchelon, setCalcEchelon] = useState<string>("0");
   const [calcResult, setCalcResult] = useState<{ minIndex: number, echelonIndex: number, totalIndex: number, baseSalary: number } | null>(null);
 
+  const education = form.watch('educationLevel');
+  const experience = form.watch('experienceYears');
+  const jobType = form.watch('jobType');
+
   useEffect(() => {
     if (calcCategory) {
       const entry = SALARY_GRID_2007.find(e => e.category === calcCategory);
@@ -91,7 +96,8 @@ export default function AddEmployeePage() {
         const ech = parseInt(calcEchelon) || 0;
         const echIndex = ech > 0 ? entry.echelonIndices[ech - 1] || 0 : 0;
         const total = entry.minIndex + echIndex;
-        const salary = total * INDEX_POINT_VALUE_2007;
+        const multiplier = jobType === 'Part-time' ? INDEX_POINT_VALUE_PART_TIME : INDEX_POINT_VALUE_2007;
+        const salary = total * multiplier;
         setCalcResult({
           minIndex: entry.minIndex,
           echelonIndex: echIndex,
@@ -102,7 +108,7 @@ export default function AddEmployeePage() {
     } else {
       setCalcResult(null);
     }
-  }, [calcCategory, calcEchelon]);
+  }, [calcCategory, calcEchelon, jobType]);
 
   const weekDays = useMemo(() => [
     { id: 0, label: t('addEmployee.days.sun') },
@@ -125,6 +131,7 @@ export default function AddEmployeePage() {
       baseSalary: 0,
       educationLevel: '',
       experienceYears: 0,
+      jobType: 'Full-time',
       role: 'Employee',
       workDays: [1, 2, 3, 4, 5],
       startDate: new Date(),
@@ -246,6 +253,7 @@ export default function AddEmployeePage() {
         cnasNumber: values.cnasNumber,
         educationLevel: values.educationLevel,
         experienceYears: values.experienceYears,
+        jobType: values.jobType,
         category: calcCategory,
         echelon: parseInt(calcEchelon) || 0,
       };
@@ -389,6 +397,22 @@ export default function AddEmployeePage() {
                         <FormItem>
                           <FormLabel>{t('addEmployee.experienceYears')}</FormLabel>
                           <FormControl><Input type="number" min={0} {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
+
+                      <FormField control={form.control} name="jobType" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('addEmployee.jobType')}</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger><SelectValue /></SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Full-time">{t('addEmployee.fullTime')}</SelectItem>
+                              <SelectItem value="Part-time">{t('addEmployee.partTime')}</SelectItem>
+                            </SelectContent>
+                          </Select>
                           <FormMessage />
                         </FormItem>
                       )} />

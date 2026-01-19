@@ -26,6 +26,7 @@ export type User = {
   experienceYears?: number;
   category?: string;
   echelon?: number;
+  jobType?: 'Full-time' | 'Part-time';
 };
 
 export type Attendance = {
