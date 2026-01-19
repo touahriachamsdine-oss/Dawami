@@ -85,6 +85,24 @@ export default function AddEmployeePage() {
   const [calcEchelon, setCalcEchelon] = useState<string>("0");
   const [calcResult, setCalcResult] = useState<{ minIndex: number, echelonIndex: number, totalIndex: number, baseSalary: number } | null>(null);
 
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      password: '',
+      rank: '',
+      jobDescription: '',
+      baseSalary: 0,
+      educationLevel: '',
+      experienceYears: 0,
+      jobType: 'Full-time',
+      role: 'Employee',
+      workDays: [1, 2, 3, 4, 5],
+      startDate: new Date(),
+    },
+  });
+
   const education = form.watch('educationLevel');
   const experience = form.watch('experienceYears');
   const jobType = form.watch('jobType');
@@ -120,23 +138,6 @@ export default function AddEmployeePage() {
     { id: 6, label: t('addEmployee.days.sat') },
   ], [t]);
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: '',
-      email: '',
-      password: '',
-      rank: '',
-      jobDescription: '',
-      baseSalary: 0,
-      educationLevel: '',
-      experienceYears: 0,
-      jobType: 'Full-time',
-      role: 'Employee',
-      workDays: [1, 2, 3, 4, 5],
-      startDate: new Date(),
-    },
-  });
 
   const currentUserQuery = useMemoFirebase(() => {
     if (!firestore || !authUser) return null;
@@ -144,9 +145,6 @@ export default function AddEmployeePage() {
   }, [firestore, authUser]);
   const { data: currentUserData, isLoading: currentUserLoading } = useCollection<User>(currentUserQuery);
   const currentUser = currentUserData?.[0];
-
-  const education = form.watch('educationLevel');
-  const experience = form.watch('experienceYears');
 
   useEffect(() => {
     if (education) {
