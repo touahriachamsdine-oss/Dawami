@@ -38,10 +38,7 @@ export function Sidebar({ userRole }: SidebarProps) {
             <div className="flex h-full max-h-screen flex-col gap-2">
                 <div className="flex h-20 items-center px-6 mb-4">
                     <Link href="/" className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-lg shadow-primary/20">
-                            <AtProfitLogo className="h-5 w-5 text-white" />
-                        </div>
-                        <span className="font-display text-2xl font-black tracking-tighter text-navy-deep dark:text-white">Dawami</span>
+                        <AtProfitLogo className="h-8 w-auto" />
                     </Link>
                 </div>
                 <div className="flex-1 px-4">

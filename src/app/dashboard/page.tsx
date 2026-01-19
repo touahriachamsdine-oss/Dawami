@@ -98,7 +98,7 @@ export default function Dashboard() {
       <div className="flex flex-col relative overflow-x-hidden pb-24 md:pb-0">
         <header className="pt-16 md:pt-6 pb-6 px-6 flex justify-between items-center bg-white dark:bg-slate-900 border-b border-slate-50 dark:border-slate-800 sticky top-0 z-30">
           <div>
-            <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Dawami</h1>
+            <AtProfitLogo className="h-8 w-auto mb-1" />
             <div className="flex items-center gap-1.5 mt-0.5">
               <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.15em]">
