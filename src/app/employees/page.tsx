@@ -192,11 +192,18 @@ export default function EmployeesPage() {
         </header>
         <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 pb-20 md:pb-8">
           <Card>
-            <CardHeader>
-              <CardTitle>{t('employees.title')}</CardTitle>
-              <CardDescription>
-                {t('employees.description')}
-              </CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>{t('employees.title')}</CardTitle>
+                <CardDescription>
+                  {t('employees.description')}
+                </CardDescription>
+              </div>
+              <Button asChild size="sm">
+                <Link href="/add-employee">
+                  {t('employees.addEmployee')}
+                </Link>
+              </Button>
             </CardHeader>
             <CardContent>
               {isMobile ? (
