@@ -27,6 +27,9 @@ export type User = {
   category?: string;
   echelon?: number;
   jobType?: 'Full-time' | 'Part-time';
+  dailyWorkHours?: number;
+  shiftStart?: string; // e.g. "08:00"
+  shiftEnd?: string;   // e.g. "17:00"
 };
 
 export type Attendance = {

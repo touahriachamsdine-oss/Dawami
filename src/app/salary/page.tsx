@@ -9,6 +9,9 @@ import {
   Menu,
   Settings,
   Users,
+  Briefcase,
+  Heart,
+  Baby,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -42,6 +45,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { mockSalaryData } from "@/lib/data";
+import { calculateRawSalary, FAMILY_ALLOWANCE_PER_CHILD, SPOUSE_ALLOWANCE } from "@/lib/salary-scale";
 import { BottomNavBar } from "@/components/ui/bottom-nav-bar";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { useLanguage } from "@/lib/language-provider";
@@ -253,6 +257,68 @@ export default function SalaryPage() {
               </ChartContainer>
             </CardContent>
           </Card>
+
+          {selectedUser && (
+            <div className="grid md:grid-cols-2 gap-4">
+              <Card className="rounded-[24px]">
+                <CardHeader>
+                  <CardTitle className="text-sm font-bold flex items-center gap-2">
+                    <Briefcase className="w-4 h-4 text-primary" />
+                    Salary Details
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex justify-between items-center border-b pb-2">
+                    <span className="text-sm text-muted-foreground">Base Salary</span>
+                    <span className="font-bold">{(selectedUser.baseSalary || 0).toLocaleString()} DA</span>
+                  </div>
+                  <div className="flex justify-between items-center border-b pb-2">
+                    <div className="flex flex-col">
+                      <span className="text-sm flex items-center gap-1.5"><Heart className="w-3.5 h-3.5 text-rose-500" /> Marital Allowance</span>
+                      <span className="text-[10px] text-muted-foreground uppercase">{selectedUser.maritalStatus || 'Single'}</span>
+                    </div>
+                    <span>{selectedUser.maritalStatus === 'Married' ? `+${SPOUSE_ALLOWANCE} DA` : '0 DA'}</span>
+                  </div>
+                  <div className="flex justify-between items-center border-b pb-2">
+                    <div className="flex flex-col">
+                      <span className="text-sm flex items-center gap-1.5"><Baby className="w-3.5 h-3.5 text-blue-500" /> Family Allowance</span>
+                      <span className="text-[10px] text-muted-foreground uppercase">{selectedUser.childrenCount || 0} Children</span>
+                    </div>
+                    <span>+{((selectedUser.childrenCount || 0) * FAMILY_ALLOWANCE_PER_CHILD).toLocaleString()} DA</span>
+                  </div>
+                  <div className="flex justify-between items-center pt-2 text-emerald-600">
+                    <span className="font-bold">Raw Salary (Gross)</span>
+                    <span className="text-xl font-black">
+                      {calculateRawSalary(selectedUser.baseSalary || 0, selectedUser.childrenCount || 0, selectedUser.maritalStatus || 'Single').toLocaleString()} DA
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="rounded-[24px] bg-primary/5 border-primary/20">
+                <CardHeader>
+                  <CardTitle className="text-sm font-bold flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-primary" />
+                    Schedule Summary
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex justify-between items-center border-b pb-2 border-primary/10">
+                    <span className="text-sm text-muted-foreground">Daily Hours</span>
+                    <span className="font-bold">{selectedUser.dailyWorkHours || 8}h / day</span>
+                  </div>
+                  <div className="flex justify-between items-center border-b pb-2 border-primary/10">
+                    <span className="text-sm text-muted-foreground">Shift Time</span>
+                    <span className="font-bold">{selectedUser.shiftStart || '08:00'} - {selectedUser.shiftEnd || '17:00'}</span>
+                  </div>
+                  <div className="flex justify-between items-center pt-2">
+                    <span className="text-sm text-muted-foreground">Work Style</span>
+                    <Badge variant="outline" className="border-primary/50 text-primary">{selectedUser.jobType || 'Full-time'}</Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </main>
         <AlertDialog open={isNotificationDialogOpen} onOpenChange={setIsNotificationDialogOpen}>
           <AlertDialogContent>

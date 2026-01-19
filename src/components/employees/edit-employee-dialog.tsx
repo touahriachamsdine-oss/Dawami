@@ -25,8 +25,13 @@ import { useToast } from '@/hooks/use-toast';
 import { useMemo, useEffect, useState } from 'react';
 import { startEnrollment, checkEnrollmentStatus } from '@/lib/actions/sensor-actions';
 import { Loader2, Fingerprint } from 'lucide-react';
-import { SALARY_GRID_2007, calculateBaseSalary2007, INDEX_POINT_VALUE_2007, EDUCATION_LEVELS, getEchelonFromExperience, INDEX_POINT_VALUE_PART_TIME } from '@/lib/salary-scale';
+import { SALARY_GRID_2007, calculateBaseSalary2007, INDEX_POINT_VALUE_2007, EDUCATION_LEVELS, getEchelonFromExperience, INDEX_POINT_VALUE_PART_TIME, calculateRawSalary } from '@/lib/salary-scale';
 import { useFirebase, updateDoc, doc } from '@/db';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
+import { CalendarIcon } from 'lucide-react';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -42,6 +47,7 @@ const formSchema = z.object({
   educationLevel: z.string().min(1, 'Education level is required.'),
   experienceYears: z.coerce.number().min(0),
   jobType: z.enum(['Full-time', 'Part-time']),
+  dailyWorkHours: z.coerce.number().min(1).max(24),
   fingerprintId: z.coerce.number().min(1).max(127).optional(),
   role: z.enum(['Admin', 'Employee']),
   workDays: z.array(z.number()).min(1, "Employee must work at least one day"),
@@ -84,9 +90,10 @@ export function EditEmployeeDialog({
       fingerprintId: user.fingerprintId,
       nationalId: user.nationalId,
       cnasNumber: user.cnasNumber,
-      // birthDate: user.birthDate ? new Date(user.birthDate) : undefined,
-      maritalStatus: user.maritalStatus,
-      childrenCount: user.childrenCount,
+      birthDate: user.birthDate ? new Date(user.birthDate) : undefined,
+      maritalStatus: user.maritalStatus || 'Single',
+      childrenCount: user.childrenCount || 0,
+      dailyWorkHours: user.dailyWorkHours || 8,
       phoneNumber: user.phoneNumber,
       baseSalary: user.baseSalary,
       educationLevel: user.educationLevel || '',
@@ -104,6 +111,8 @@ export function EditEmployeeDialog({
   const education = form.watch('educationLevel');
   const experience = form.watch('experienceYears');
   const jobType = form.watch('jobType');
+  const childrenCount = form.watch('childrenCount');
+  const maritalStatus = form.watch('maritalStatus');
 
   useEffect(() => {
     if (education) {
@@ -128,16 +137,19 @@ export function EditEmployeeDialog({
         const echIndex = ech > 0 ? entry.echelonIndices[ech - 1] || 0 : 0;
         const total = entry.minIndex + echIndex;
         const multiplier = jobType === 'Part-time' ? INDEX_POINT_VALUE_PART_TIME : INDEX_POINT_VALUE_2007;
-        const salary = total * multiplier;
+        const baseSalary = total * multiplier;
+        const rawSalary = calculateRawSalary(baseSalary, childrenCount, maritalStatus);
+
         setCalcResult({
           minIndex: entry.minIndex,
           echelonIndex: echIndex,
           totalIndex: total,
-          baseSalary: salary
+          baseSalary: baseSalary,
+          rawSalary: rawSalary
         });
       }
     }
-  }, [calcCategory, calcEchelon, jobType]);
+  }, [calcCategory, calcEchelon, jobType, childrenCount, maritalStatus]);
 
   useEffect(() => {
     if (calcResult) {
@@ -183,10 +195,14 @@ export function EditEmployeeDialog({
         childrenCount: values.childrenCount,
         phoneNumber: values.phoneNumber,
         baseSalary: values.baseSalary,
-        totalSalary: values.baseSalary, // Simplified: sync total with base for now
+        totalSalary: values.baseSalary, // Simplified
         educationLevel: values.educationLevel,
         experienceYears: values.experienceYears,
         jobType: values.jobType,
+        birthDate: values.birthDate ? values.birthDate.toISOString() : undefined,
+        maritalStatus: values.maritalStatus,
+        childrenCount: values.childrenCount,
+        dailyWorkHours: values.dailyWorkHours,
         category: calcCategory,
         echelon: parseInt(calcEchelon) || 0,
         role: values.role,
@@ -269,6 +285,43 @@ export function EditEmployeeDialog({
                 </FormItem>
               )}
             />
+            <FormField control={form.control} name="birthDate" render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>{t('addEmployee.birthDate')}</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "pl-3 text-left font-normal",
+                          !field.value && "text-muted-foreground"
+                        )}
+                      >
+                        {field.value instanceof Date ? (
+                          format(field.value, "PPP")
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={field.value}
+                      onSelect={field.onChange}
+                      disabled={(date) =>
+                        date > new Date() || date < new Date("1900-01-01")
+                      }
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+                <FormMessage />
+              </FormItem>
+            )} />
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -341,11 +394,24 @@ export function EditEmployeeDialog({
               </FormItem>
             )} />
 
+            <FormField control={form.control} name="dailyWorkHours" render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('addEmployee.dailyWorkHours')}</FormLabel>
+                <FormControl><Input type="number" min={1} max={24} {...field} /></FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+
             <Card className="bg-primary/5 border-primary/20 border">
               <CardHeader className="py-2 px-3">
                 <CardTitle className="text-xs font-bold flex items-center justify-between">
                   {t('addEmployee.salaryCalculator.title')}
-                  {calcResult && <span className="text-primary">{calcResult.baseSalary.toLocaleString()} DA</span>}
+                  {calcResult && (
+                    <div className="text-right">
+                      <div className="text-primary">{calcResult.baseSalary.toLocaleString()} DA <span className="text-[10px] text-muted-foreground font-normal">(Base)</span></div>
+                      <div className="text-emerald-600 font-bold">{calcResult.rawSalary.toLocaleString()} DA <span className="text-[10px] text-muted-foreground font-normal">({t('addEmployee.salaryCalculator.rawSalary')})</span></div>
+                    </div>
+                  )}
                 </CardTitle>
               </CardHeader>
             </Card>
@@ -427,17 +493,17 @@ export function EditEmployeeDialog({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Marital Status</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="Single">Single</SelectItem>
-                        <SelectItem value="Married">Married</SelectItem>
-                        <SelectItem value="Divorced">Divorced</SelectItem>
-                        <SelectItem value="Widowed">Widowed</SelectItem>
+                        <SelectItem value="Single">{t('addEmployee.single')}</SelectItem>
+                        <SelectItem value="Married">{t('addEmployee.married')}</SelectItem>
+                        <SelectItem value="Divorced">{t('addEmployee.divorced')}</SelectItem>
+                        <SelectItem value="Widowed">{t('addEmployee.widowed')}</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />

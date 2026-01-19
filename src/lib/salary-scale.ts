@@ -66,3 +66,15 @@ export function calculateBaseSalary2007(category: string, echelon: number, jobTy
 
     return totalIndex * multiplier;
 }
+
+export const FAMILY_ALLOWANCE_PER_CHILD = 300;
+export const SPOUSE_ALLOWANCE = 800; // Salaire Unique
+
+export function calculateRawSalary(baseSalary: number, childrenCount: number = 0, maritalStatus: string = "Single"): number {
+    let raw = baseSalary;
+    raw += (childrenCount || 0) * FAMILY_ALLOWANCE_PER_CHILD;
+    if (maritalStatus === "Married") {
+        raw += SPOUSE_ALLOWANCE;
+    }
+    return raw;
+}

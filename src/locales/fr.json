@@ -63,6 +63,11 @@
         "qrCodeNote": "Ce code est unique et se rafraîchit périodiquement.",
         "recentAttendance": "Présence récente",
         "recentAttendanceDesc": "Pointages récents, absences et retards.",
+        "workHours": "Heures de travail",
+        "recentActivity": "Pointages récents et durées",
+        "checkIn": "Arrivée",
+        "checkOut": "Départ",
+        "duration": "Durée",
         "viewAll": "Voir tout",
         "employee": "Employé",
         "status": "Statut",
@@ -237,6 +242,16 @@
         "jobType": "Type d'emploi",
         "fullTime": "Temps plein",
         "partTime": "Temps partiel",
+        "birthDate": "Date de naissance",
+        "maritalStatus": "État civil",
+        "childrenCount": "Nombre d'enfants",
+        "dailyWorkHours": "Heures de travail quotidiennes",
+        "shiftStart": "Début de service",
+        "shiftEnd": "Fin de service",
+        "single": "Célibataire",
+        "married": "Marié(e)",
+        "divorced": "Divorcé(e)",
+        "widowed": "Veuf/Veuve",
         "days": {
             "sun": "Dim",
             "mon": "Lun",
@@ -257,6 +272,7 @@
         "echelonIndex": "Indice d'échelon",
         "totalIndex": "Indice total",
         "result": "Salaire de base résultant",
+        "rawSalary": "Salaire Brut",
         "apply": "Appliquer au formulaire"
     }
 }

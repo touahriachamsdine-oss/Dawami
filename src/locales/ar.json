@@ -63,6 +63,11 @@
         "qrCodeNote": "هذا الرمز فريد ويتم تحديثه بشكل دوري.",
         "recentAttendance": "الحضور الأخير",
         "recentAttendanceDesc": "تسجيلات الحضور والغياب والتأخير الأخيرة.",
+        "workHours": "ساعات العمل",
+        "recentActivity": "تسجيلات الحضور الأخيرة والمدد",
+        "checkIn": "تسجيل الدخول",
+        "checkOut": "تسجيل الخروج",
+        "duration": "المدة",
         "viewAll": "عرض الكل",
         "employee": "الموظف",
         "status": "الحالة",
@@ -235,6 +240,16 @@
         "jobType": "نوع الوظيفة",
         "fullTime": "دوام كامل",
         "partTime": "دوام جزئي",
+        "birthDate": "تاريخ الميلاد",
+        "maritalStatus": "الحالة الاجتماعية",
+        "childrenCount": "عدد الأطفال",
+        "dailyWorkHours": "ساعات العمل اليومية",
+        "shiftStart": "بداية الدوام",
+        "shiftEnd": "نهاية الدوام",
+        "single": "أعزب",
+        "married": "متزوج",
+        "divorced": "مطلق",
+        "widowed": "أرمل",
         "days": {
             "sun": "الأحد",
             "mon": "الاثنين",
@@ -254,6 +269,7 @@
             "echelonIndex": "الرقم الاستدلالي للدرجة",
             "totalIndex": "الرقم الاستدلالي الإجمالي",
             "result": "الراتب الأساسي الناتج",
+            "rawSalary": "الراتب الخام (الإجمالي)",
             "apply": "تطبيق على النموذج"
         }
     }

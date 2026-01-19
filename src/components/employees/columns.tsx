@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DataTableColumnHeader } from "./data-table-column-header";
 import { DataTableRowActions } from "./data-table-row-actions";
+import { format } from "date-fns";
 
 export const columns = (t: (key: string) => string): ColumnDef<User>[] => [
   {
@@ -71,10 +72,30 @@ export const columns = (t: (key: string) => string): ColumnDef<User>[] => [
     ),
   },
   {
-    accessorKey: "phoneNumber",
+    accessorKey: "birthDate",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Phone" />
-    )
+      <DataTableColumnHeader column={column} title={t('addEmployee.birthDate')} />
+    ),
+    cell: ({ row }) => {
+      const date = row.original.birthDate;
+      return <div>{date ? format(new Date(date), "PP") : "-"}</div>;
+    }
+  },
+  {
+    accessorKey: "maritalStatus",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('addEmployee.maritalStatus')} />
+    ),
+    cell: ({ row }) => {
+      const status = row.original.maritalStatus;
+      return <div>{status ? t(`addEmployee.${status.toLowerCase()}`) : "-"}</div>;
+    }
+  },
+  {
+    accessorKey: "childrenCount",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('addEmployee.childrenCount')} />
+    ),
   },
   {
     accessorKey: "baseSalary",
@@ -113,6 +134,12 @@ export const columns = (t: (key: string) => string): ColumnDef<User>[] => [
         </Badge>
       );
     },
+  },
+  {
+    accessorKey: "phoneNumber",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Phone" />
+    ),
   },
   {
     id: "actions",

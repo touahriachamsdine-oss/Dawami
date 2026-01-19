@@ -50,7 +50,7 @@ import { cn } from '@/lib/utils';
 import { Textarea } from '@/components/ui/textarea';
 import React, { useEffect, useMemo, useState } from 'react';
 import { startEnrollment, checkEnrollmentStatus } from '@/lib/actions/sensor-actions';
-import { SALARY_GRID_2007, calculateBaseSalary2007, INDEX_POINT_VALUE_2007, EDUCATION_LEVELS, getEchelonFromExperience, INDEX_POINT_VALUE_PART_TIME } from '@/lib/salary-scale';
+import { SALARY_GRID_2007, calculateBaseSalary2007, INDEX_POINT_VALUE_2007, EDUCATION_LEVELS, getEchelonFromExperience, INDEX_POINT_VALUE_PART_TIME, calculateRawSalary } from '@/lib/salary-scale';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -62,6 +62,12 @@ const formSchema = z.object({
   educationLevel: z.string().min(1, 'Education level is required.'),
   experienceYears: z.coerce.number().min(0),
   jobType: z.enum(['Full-time', 'Part-time']),
+  birthDate: z.date({ required_error: "Birth date is required" }),
+  maritalStatus: z.enum(['Single', 'Married', 'Divorced', 'Widowed']),
+  childrenCount: z.coerce.number().min(0),
+  dailyWorkHours: z.coerce.number().min(1).max(24),
+  shiftStart: z.string().min(5).max(5),
+  shiftEnd: z.string().min(5).max(5),
   fingerprintId: z.coerce.number().optional(),
   cnasNumber: z.string().optional(),
   role: z.enum(['Admin', 'Employee']),
@@ -97,6 +103,11 @@ export default function AddEmployeePage() {
       educationLevel: '',
       experienceYears: 0,
       jobType: 'Full-time',
+      maritalStatus: 'Single',
+      childrenCount: 0,
+      dailyWorkHours: 8,
+      shiftStart: '08:00',
+      shiftEnd: '17:00',
       role: 'Employee',
       workDays: [1, 2, 3, 4, 5],
       startDate: new Date(),
@@ -106,6 +117,8 @@ export default function AddEmployeePage() {
   const education = form.watch('educationLevel');
   const experience = form.watch('experienceYears');
   const jobType = form.watch('jobType');
+  const childrenCount = form.watch('childrenCount');
+  const maritalStatus = form.watch('maritalStatus');
 
   useEffect(() => {
     if (calcCategory) {
@@ -115,18 +128,21 @@ export default function AddEmployeePage() {
         const echIndex = ech > 0 ? entry.echelonIndices[ech - 1] || 0 : 0;
         const total = entry.minIndex + echIndex;
         const multiplier = jobType === 'Part-time' ? INDEX_POINT_VALUE_PART_TIME : INDEX_POINT_VALUE_2007;
-        const salary = total * multiplier;
+        const baseSalary = total * multiplier;
+        const rawSalary = calculateRawSalary(baseSalary, childrenCount, maritalStatus);
+
         setCalcResult({
           minIndex: entry.minIndex,
           echelonIndex: echIndex,
           totalIndex: total,
-          baseSalary: salary
+          baseSalary: baseSalary,
+          rawSalary: rawSalary
         });
       }
     } else {
       setCalcResult(null);
     }
-  }, [calcCategory, calcEchelon, jobType]);
+  }, [calcCategory, calcEchelon, jobType, childrenCount, maritalStatus]);
 
   const weekDays = useMemo(() => [
     { id: 0, label: t('addEmployee.days.sun') },
@@ -245,7 +261,13 @@ export default function AddEmployeePage() {
         attendanceRate: 100,
         daysAbsent: 0,
         workDays: values.workDays,
+        dailyWorkHours: values.dailyWorkHours,
+        shiftStart: values.shiftStart,
+        shiftEnd: values.shiftEnd,
         startDate: values.startDate.toISOString(),
+        birthDate: values.birthDate.toISOString(),
+        maritalStatus: values.maritalStatus,
+        childrenCount: values.childrenCount,
         jobDescription: values.jobDescription,
         fingerprintId: values.fingerprintId || (Math.floor(Math.random() * 126) + 1), // Limit to 1-127 range for most sensors
         cnasNumber: values.cnasNumber,
@@ -366,6 +388,43 @@ export default function AddEmployeePage() {
                         <FormMessage />
                       </FormItem>
                     )} />
+                    <FormField control={form.control} name="birthDate" render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>{t('addEmployee.birthDate')}</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant={"outline"}
+                                className={cn(
+                                  "pl-3 text-left font-normal",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                {field.value ? (
+                                  format(field.value, "PPP")
+                                ) : (
+                                  <span>Pick a date</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              disabled={(date) =>
+                                date > new Date() || date < new Date("1900-01-01")
+                              }
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
                     <FormField control={form.control} name="rank" render={({ field }) => (
                       <FormItem>
                         <FormLabel>{t('addEmployee.rank')}</FormLabel>
@@ -415,11 +474,70 @@ export default function AddEmployeePage() {
                         </FormItem>
                       )} />
 
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField control={form.control} name="maritalStatus" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('addEmployee.maritalStatus')}</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="Single">{t('addEmployee.single')}</SelectItem>
+                                <SelectItem value="Married">{t('addEmployee.married')}</SelectItem>
+                                <SelectItem value="Divorced">{t('addEmployee.divorced')}</SelectItem>
+                                <SelectItem value="Widowed">{t('addEmployee.widowed')}</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+
+                        <FormField control={form.control} name="childrenCount" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('addEmployee.childrenCount')}</FormLabel>
+                            <FormControl><Input type="number" min={0} {...field} /></FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                      </div>
+
+                      <FormField control={form.control} name="dailyWorkHours" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('addEmployee.dailyWorkHours')}</FormLabel>
+                          <FormControl><Input type="number" min={1} max={24} {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField control={form.control} name="shiftStart" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('addEmployee.shiftStart')}</FormLabel>
+                            <FormControl><Input type="time" {...field} /></FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+
+                        <FormField control={form.control} name="shiftEnd" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('addEmployee.shiftEnd')}</FormLabel>
+                            <FormControl><Input type="time" {...field} /></FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                      </div>
+
                       <Card className="bg-primary/5 border-primary/20 border">
                         <CardHeader className="py-3 px-4">
                           <CardTitle className="text-sm font-bold flex items-center justify-between">
                             {t('addEmployee.salaryCalculator.title')}
-                            {calcResult && <span className="text-primary">{calcResult.baseSalary.toLocaleString()} DA</span>}
+                            {calcResult && (
+                              <div className="text-right">
+                                <div className="text-primary">{calcResult.baseSalary.toLocaleString()} DA <span className="text-[10px] text-muted-foreground font-normal">(Base)</span></div>
+                                <div className="text-emerald-600">{calcResult.rawSalary.toLocaleString()} DA <span className="text-[10px] text-muted-foreground font-normal">({t('addEmployee.salaryCalculator.rawSalary')})</span></div>
+                              </div>
+                            )}
                           </CardTitle>
                         </CardHeader>
                         {calcResult && (

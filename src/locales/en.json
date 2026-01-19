@@ -63,6 +63,11 @@
         "qrCodeNote": "This code is unique and refreshes periodically.",
         "recentAttendance": "Recent Attendance",
         "recentAttendanceDesc": "Recent check-ins, absences, and late arrivals.",
+        "workHours": "Work Hours",
+        "recentActivity": "Recent employee check-ins and durations",
+        "checkIn": "Check In",
+        "checkOut": "Check Out",
+        "duration": "Duration",
         "viewAll": "View All",
         "employee": "Employee",
         "status": "Status",
@@ -237,6 +242,16 @@
         "jobType": "Job Type",
         "fullTime": "Full-time",
         "partTime": "Part-time",
+        "birthDate": "Birth Date",
+        "maritalStatus": "Marital Status",
+        "childrenCount": "Children Count",
+        "dailyWorkHours": "Daily Work Hours",
+        "shiftStart": "Shift Start",
+        "shiftEnd": "Shift End",
+        "single": "Single",
+        "married": "Married",
+        "divorced": "Divorced",
+        "widowed": "Widowed",
         "days": {
             "sun": "Sun",
             "mon": "Mon",
@@ -256,6 +271,7 @@
             "echelonIndex": "Echelon Index",
             "totalIndex": "Total Index",
             "result": "Resulting Base Salary",
+            "rawSalary": "Raw Salary (Gross)",
             "apply": "Apply to Form"
         }
     }
