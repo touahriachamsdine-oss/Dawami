@@ -123,17 +123,11 @@ export function EditEmployeeDialog({
         if (data.nextId) {
           id = data.nextId;
           form.setValue('fingerprintId', id);
-          toast({ title: "Auto-ID Assigned", description: `Assigned next available ID: ${id}` });
         }
       } catch (error) {
-        toast({ title: "Error", description: "Could not auto-generate ID. Please enter one manually.", variant: "destructive" });
+        toast({ title: "Error", description: "Could not auto-generate ID.", variant: "destructive" });
         return;
       }
-    }
-
-    if (!id) {
-      toast({ title: "Error", description: "Please enter a Fingerprint ID to enroll to.", variant: "destructive" });
-      return;
     }
 
     setIsEnrolling(true);

@@ -50,6 +50,7 @@ import { cn } from '@/lib/utils';
 import { Textarea } from '@/components/ui/textarea';
 import React, { useEffect, useMemo, useState } from 'react';
 import { startEnrollment, checkEnrollmentStatus } from '@/lib/actions/sensor-actions';
+import { SALARY_GRID_2007, calculateBaseSalary2007, INDEX_POINT_VALUE_2007 } from '@/lib/salary-scale';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -76,6 +77,30 @@ export default function AddEmployeePage() {
   const { t } = useLanguage();
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [enrollmentMessage, setEnrollmentMessage] = useState("");
+
+  const [calcCategory, setCalcCategory] = useState<string>("");
+  const [calcEchelon, setCalcEchelon] = useState<string>("0");
+  const [calcResult, setCalcResult] = useState<{ minIndex: number, echelonIndex: number, totalIndex: number, baseSalary: number } | null>(null);
+
+  useEffect(() => {
+    if (calcCategory) {
+      const entry = SALARY_GRID_2007.find(e => e.category === calcCategory);
+      if (entry) {
+        const ech = parseInt(calcEchelon) || 0;
+        const echIndex = ech > 0 ? entry.echelonIndices[ech - 1] || 0 : 0;
+        const total = entry.minIndex + echIndex;
+        const salary = total * INDEX_POINT_VALUE_2007;
+        setCalcResult({
+          minIndex: entry.minIndex,
+          echelonIndex: echIndex,
+          totalIndex: total,
+          baseSalary: salary
+        });
+      }
+    } else {
+      setCalcResult(null);
+    }
+  }, [calcCategory, calcEchelon]);
 
   const weekDays = useMemo(() => [
     { id: 0, label: t('addEmployee.days.sun') },
@@ -115,10 +140,26 @@ export default function AddEmployeePage() {
     }
   }, [isUserLoading, currentUser, router]);
 
+  // Fetch next ID automatically on mount
+  useEffect(() => {
+    const fetchNextId = async () => {
+      try {
+        const response = await fetch('/api/sensor/next-id');
+        const data = await response.json();
+        if (data.nextId) {
+          form.setValue('fingerprintId', data.nextId);
+        }
+      } catch (error) {
+        console.error("Failed to fetch next fingerprint ID", error);
+      }
+    };
+    fetchNextId();
+  }, [form]);
+
   const handleEnrollment = async () => {
     let id = form.getValues('fingerprintId');
 
-    // If no ID provided, fetch the next available one
+    // If no ID assigned yet, fetch it now
     if (!id) {
       try {
         const response = await fetch('/api/sensor/next-id');
@@ -126,17 +167,11 @@ export default function AddEmployeePage() {
         if (data.nextId) {
           id = data.nextId;
           form.setValue('fingerprintId', id);
-          toast({ title: "Auto-ID Assigned", description: `Assigned next available ID: ${id}` });
         }
       } catch (error) {
-        toast({ title: "Error", description: "Could not auto-generate ID. Please enter one manually.", variant: "destructive" });
+        toast({ title: "Error", description: "Could not auto-generate ID.", variant: "destructive" });
         return;
       }
-    }
-
-    if (!id) {
-      toast({ title: "Error", description: "Please enter a Fingerprint ID to enroll to.", variant: "destructive" });
-      return;
     }
 
     setIsEnrolling(true);
@@ -300,19 +335,91 @@ export default function AddEmployeePage() {
                         <FormMessage />
                       </FormItem>
                     )} />
-                    <FormField control={form.control} name="baseSalary" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t('addEmployee.baseSalary')}</FormLabel>
-                        <FormControl><Input type="number" {...field} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
+                    <div className="space-y-4">
+                      <FormField control={form.control} name="baseSalary" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('addEmployee.baseSalary')}</FormLabel>
+                          <FormControl><Input type="number" {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
+
+                      <Card className="bg-muted/30 border-dashed">
+                        <CardHeader className="py-3 px-4">
+                          <CardTitle className="text-sm font-medium">{t('addEmployee.salaryCalculator.title')}</CardTitle>
+                        </CardHeader>
+                        <CardContent className="grid gap-4 py-3 px-4 pt-0">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <label className="text-xs font-medium">{t('addEmployee.salaryCalculator.category')}</label>
+                              <Select onValueChange={setCalcCategory} value={calcCategory}>
+                                <SelectTrigger className="h-8 text-xs">
+                                  <SelectValue placeholder="Cat." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {SALARY_GRID_2007.map(item => (
+                                    <SelectItem key={item.category} value={item.category}>{item.category}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-2">
+                              <label className="text-xs font-medium">{t('addEmployee.salaryCalculator.echelon')}</label>
+                              <Select onValueChange={setCalcEchelon} value={calcEchelon}>
+                                <SelectTrigger className="h-8 text-xs">
+                                  <SelectValue placeholder="Ech." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="0">0</SelectItem>
+                                  {[...Array(12)].map((_, i) => (
+                                    <SelectItem key={i + 1} value={(i + 1).toString()}>{i + 1}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+
+                          {calcResult && (
+                            <div className="text-xs space-y-1 bg-background/50 p-2 rounded border">
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">{t('addEmployee.salaryCalculator.minIndex')}:</span>
+                                <span className="font-mono">{calcResult.minIndex}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">{t('addEmployee.salaryCalculator.echelonIndex')}:</span>
+                                <span className="font-mono">+{calcResult.echelonIndex}</span>
+                              </div>
+                              <div className="flex justify-between border-t pt-1 mt-1 font-bold">
+                                <span>{t('addEmployee.salaryCalculator.totalIndex')}:</span>
+                                <span className="font-mono">{calcResult.totalIndex}</span>
+                              </div>
+                              <div className="flex justify-between text-primary font-bold mt-2 pt-2 border-t">
+                                <span>{t('addEmployee.salaryCalculator.result')}:</span>
+                                <span>{calcResult.baseSalary.toLocaleString()} DA</span>
+                              </div>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="w-full mt-2 h-7 text-[10px]"
+                                onClick={() => form.setValue('baseSalary', calcResult.baseSalary)}
+                              >
+                                {t('addEmployee.salaryCalculator.apply')}
+                              </Button>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </div>
                     <FormField control={form.control} name="fingerprintId" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Fingerprint ID</FormLabel>
+                        <FormLabel className="flex justify-between items-center">
+                          Fingerprint ID
+                          <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded uppercase tracking-wider">Automated</span>
+                        </FormLabel>
                         <div className="flex gap-2">
                           <FormControl>
-                            <Input type="number" placeholder="e.g. 1" {...field} />
+                            <Input type="number" placeholder="Auto-assigning..." {...field} readOnly className="bg-muted/50 cursor-not-allowed" />
                           </FormControl>
                           <Button
                             type="button"

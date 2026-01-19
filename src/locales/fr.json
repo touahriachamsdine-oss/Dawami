@@ -241,5 +241,17 @@
             "fri": "Ven",
             "sat": "Sam"
         }
+    },
+    "salaryCalculator": {
+        "title": "Calculateur de salaire (Grille 2007)",
+        "category": "Catégorie",
+        "echelon": "Échelon",
+        "calculate": "Calculer",
+        "indices": "Indices",
+        "minIndex": "Indice minimal",
+        "echelonIndex": "Indice d'échelon",
+        "totalIndex": "Indice total",
+        "result": "Salaire de base résultant",
+        "apply": "Appliquer au formulaire"
     }
 }

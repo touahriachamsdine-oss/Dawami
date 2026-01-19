@@ -240,6 +240,18 @@
             "thu": "Thu",
             "fri": "Fri",
             "sat": "Sat"
+        },
+        "salaryCalculator": {
+            "title": "Salary Calculator (Grid 2007)",
+            "category": "Category",
+            "echelon": "Echelon",
+            "calculate": "Calculate",
+            "indices": "Indices",
+            "minIndex": "Minimal Index",
+            "echelonIndex": "Echelon Index",
+            "totalIndex": "Total Index",
+            "result": "Resulting Base Salary",
+            "apply": "Apply to Form"
         }
     }
 }
