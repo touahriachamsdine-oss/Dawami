@@ -30,9 +30,8 @@ export default {
           foreground: 'hsl(var(--popover-foreground))',
         },
         primary: {
-          DEFAULT: '#107189',
-          foreground: '#ffffff',
-          gradient: 'linear-gradient(135deg, #6AFF4A 0%, #FFFF00 100%)',
+          DEFAULT: 'hsl(var(--primary))',
+          foreground: 'hsl(var(--primary-foreground))',
         },
         secondary: {
           DEFAULT: '#1A2E44',

@@ -56,17 +56,17 @@ export function Sidebar({ userRole }: SidebarProps) {
                                     className={cn(
                                         "flex items-center gap-3.5 rounded-2xl px-4 py-3 transition-all duration-200 group relative",
                                         isActive
-                                            ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 font-bold shadow-sm shadow-emerald-100/20"
+                                            ? "bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 font-bold shadow-sm shadow-amber-100/20"
                                             : "text-slate-500 hover:text-navy-deep dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50"
                                     )}
                                 >
                                     <Icon className={cn(
                                         "h-5 w-5 transition-transform duration-200 group-hover:scale-110",
-                                        isActive ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400"
+                                        isActive ? "text-amber-600 dark:text-amber-400" : "text-slate-400"
                                     )} />
                                     <span className="text-sm tracking-wide">{item.label}</span>
                                     {isActive && (
-                                        <div className="absolute left-0 w-1 h-6 bg-emerald-500 rounded-r-full"></div>
+                                        <div className="absolute left-0 w-1 h-6 bg-amber-500 rounded-r-full"></div>
                                     )}
                                 </Link>
                             );

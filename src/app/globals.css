@@ -19,8 +19,8 @@ body {
     --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
-    --primary: 192 79% 30%;
-    /* Dawami Teal #107189 */
+    --primary: 30 85% 55%;
+    /* Dawami Orange */
     --primary-foreground: 0 0% 98%;
     --secondary: 212 45% 19%;
     /* Dawami Navy #1A2E44 */
@@ -34,7 +34,7 @@ body {
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 192 79% 30%;
+    --ring: 30 85% 55%;
     --radius: 1rem;
   }
 
@@ -45,7 +45,7 @@ body {
     --card-foreground: 210 40% 98%;
     --popover: 222 47% 6%;
     --popover-foreground: 210 40% 98%;
-    --primary: 192 79% 45%;
+    --primary: 30 85% 55%;
     --primary-foreground: 0 0% 98%;
     --secondary: 212 45% 25%;
     --secondary-foreground: 210 40% 98%;
