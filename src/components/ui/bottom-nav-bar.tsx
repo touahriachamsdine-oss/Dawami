@@ -1,6 +1,6 @@
 'use client';
 import { useLanguage } from '@/lib/language-provider';
-import { Activity, DollarSign, Fingerprint, Home, Users } from 'lucide-react';
+import { Activity, DollarSign, Fingerprint, Home, Users, Map } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -18,6 +18,7 @@ export function BottomNavBar({ userRole }: BottomNavBarProps) {
     { href: '/employees', label: t('nav.employees'), icon: Users },
     { href: '/payroll', label: t('nav.payroll'), icon: DollarSign },
     { href: '/sensor', label: t('nav.sensor'), icon: Fingerprint },
+    { href: '/live-map', label: 'Map', icon: Map },
   ];
 
   const itemsToShow = navItems.length;

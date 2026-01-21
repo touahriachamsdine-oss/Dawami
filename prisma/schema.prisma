@@ -40,6 +40,47 @@ model User {
   payrollRecords  PayrollRecord[]
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
+  attendanceLogs  AttendanceLog[]
+}
+
+model Device {
+  id              String           @id @default(cuid())
+  deviceId        String           @unique
+  name            String
+  status          String           @default("Offline")
+  lastSeen        DateTime?
+  allowedLat      Float?
+  allowedLng      Float?
+  allowedRadius   Int              @default(100) // meters
+  locationLogs    LocationLog[]
+  attendances     Attendance[]
+  attendanceLogs  AttendanceLog[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+
+model LocationLog {
+  id        String   @id @default(cuid())
+  deviceId  String
+  device    Device   @relation(fields: [deviceId], references: [deviceId])
+  lat       Float
+  lng       Float
+  timestamp DateTime @default(now())
+}
+
+model AttendanceLog {
+  id            String   @id @default(cuid())
+  userId        String?
+  user          User?    @relation(fields: [userId], references: [id])
+  deviceId      String?
+  device        Device?  @relation(fields: [deviceId], references: [deviceId])
+  fingerprintId Int
+  timestamp     DateTime @default(now())
+  status        String   // ACCEPTED, REJECTED, FLAGGED
+  reason        String?  // "OUTSIDE_GEOFENCE", "SPEED_CHECK_FAILED"
+  riskLevel     String   @default("LOW") // LOW, MEDIUM, HIGH
+  lat           Float?
+  lng           Float?
 }
 
 model Attendance {
@@ -50,6 +91,13 @@ model Attendance {
   checkInTime   DateTime?
   checkOutTime  DateTime?
   status        String   
+  // New fields for V2 features
+  deviceId      String?
+  device        Device?  @relation(fields: [deviceId], references: [deviceId])
+  lat           Float?
+  lng           Float?
+  riskLevel     String   @default("LOW")
+  
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }

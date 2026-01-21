@@ -9,7 +9,8 @@ import {
     Settings,
     Users,
     LayoutDashboard,
-    Fingerprint
+    Fingerprint,
+    Map
 } from "lucide-react";
 import { AtProfitLogo } from "@/components/icons";
 import { useLanguage } from "@/lib/language-provider";
@@ -27,6 +28,8 @@ export function Sidebar({ userRole }: SidebarProps) {
         { href: '/dashboard', label: t('nav.dashboard'), icon: LayoutDashboard },
         { href: '/employees', label: t('nav.employees'), icon: Users },
         { href: '/attendance', label: t('nav.attendance'), icon: Activity },
+        { href: '/attendance', label: t('nav.attendance'), icon: Activity },
+        { href: '/live-map', label: 'Live Map', icon: Map },
         { href: '/work-hours', label: t('dashboard.workHours'), icon: Activity },
         { href: '/salary', label: t('nav.salary'), icon: DollarSign },
         { href: '/payroll', label: t('nav.payroll'), icon: DollarSign },

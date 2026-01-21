@@ -4,7 +4,36 @@ import { prisma } from "@/lib/prisma";
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { status, message, secret } = body;
+        const { status, message, secret, lat, lng, deviceId } = body;
+
+        // V2: Location Logging
+        if (deviceId) {
+            // Update device status
+            await prisma.device.upsert({
+                where: { deviceId },
+                update: {
+                    status: 'Online',
+                    lastSeen: new Date(),
+                    // Optionally update name if not set? No.
+                },
+                create: {
+                    deviceId,
+                    name: `Device ${deviceId}`,
+                    status: 'Online',
+                    lastSeen: new Date()
+                }
+            });
+
+            if (lat && lng) {
+                await prisma.locationLog.create({
+                    data: {
+                        deviceId,
+                        lat: parseFloat(lat),
+                        lng: parseFloat(lng)
+                    }
+                });
+            }
+        }
 
         // Simple security check
         if (secret !== process.env.SENSOR_SECRET) {
